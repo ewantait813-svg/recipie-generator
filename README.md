@@ -6,6 +6,8 @@ Describe any dish and Claude develops a full recipe: weighed ingredients, donene
 
 Live version: https://claude.ai/artifact/ES56QVvN9pjXCN2agBTytx
 
+**Settings:** the gear button opens a settings panel. It has light, dark and system themes, six accent colors, text size, units, timer sound, a compact layout, reduced motion, which mode the page opens to, and buttons to reset settings or clear the recipe box.
+
 ## How it works
 
 `index.html` is a single self-contained page. It asks Claude for recipes through the claude.ai Artifact runtime (`window.claude.use("sample")`). The AI features only work when the page is opened as a claude.ai artifact. Opened anywhere else, such as GitHub Pages or a local file, the page shows the example recipe and the cooking tools, but it can't develop new recipes.

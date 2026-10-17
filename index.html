@@ -161,6 +161,36 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
 @media (prefers-reduced-motion: reduce) { .pan i { animation: none; width: 100%; opacity: 0.5; } }
 .cooking p { color: var(--muted); margin: 0; font-family: var(--mono); font-size: 14px; }
 
+/* Settings */
+.tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gear { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px 7px 10px; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 14px; }
+.gear svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+dialog.settings { border: 0; padding: 0; margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(400px, 100%); max-width: 100%; background: var(--card); color: var(--ink); box-shadow: -10px 0 40px rgba(0, 0, 0, 0.18); }
+dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
+.set-in { display: grid; gap: 26px; padding: calc(env(safe-area-inset-top, 0px) + 22px) max(22px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px) 22px; }
+.set-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--line); padding-bottom: 12px; }
+.set-head h2 { font-size: 1.4rem; }
+.x { border: 1px solid var(--line); background: var(--paper); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; }
+.set-group { display: grid; gap: 10px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; background: var(--paper); padding: 9px 6px; cursor: pointer; font-family: var(--display); font-size: 14px; font-weight: 600; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.swatch { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--paper); border-radius: 4px; padding: 8px 10px; cursor: pointer; font-family: var(--display); font-size: 14px; text-align: left; }
+.swatch i { width: 18px; height: 18px; border-radius: 50%; flex: none; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+.swatch[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 16px; cursor: pointer; }
+.toggle input { width: 20px; height: 20px; accent-color: var(--basil); flex: none; }
+.toggle small { display: block; color: var(--muted); font-size: 13.5px; }
+.danger { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 2px dashed var(--line); padding-top: 18px; }
+.danger .btn-ghost.warn { color: var(--warn); border-color: var(--warn); }
+.danger .note { width: 100%; font-size: 14px; color: var(--muted); margin: 0; }
+:root.compact .ticket { gap: 12px; padding: 16px; }
+:root.compact .card-top, :root.compact .ingredients, :root.compact .method, :root.compact .notes { padding: 16px 20px; }
+:root.compact ol.steps { gap: 12px; }
+:root.no-motion *, :root.no-motion *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+
 /* Mode switch */
 .mode { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .mode button { border: 0; background: var(--paper); padding: 9px 10px; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 15px; }
@@ -211,11 +241,76 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
       <h1>Test <span>Kitchen</span></h1>
       <p>Describe any dish and Claude develops a full recipe with tested ratios, doneness cues and timings. Or tell it your sport and get a fueling plan built around your training.</p>
     </div>
-    <div class="units" role="group" aria-label="Measurement units">
-      <button type="button" id="u-us" data-u="us" aria-pressed="true">US cups · °F</button>
-      <button type="button" id="u-metric" data-u="metric" aria-pressed="false">Metric · °C</button>
+    <div class="tools">
+      <div class="units" role="group" aria-label="Measurement units">
+        <button type="button" id="u-us" data-u="us" aria-pressed="true">US cups · °F</button>
+        <button type="button" id="u-metric" data-u="metric" aria-pressed="false">Metric · °C</button>
+      </div>
+      <button type="button" class="gear" id="open-settings" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+        Settings
+      </button>
     </div>
   </header>
+
+  <dialog class="settings" id="settings" aria-labelledby="settings-title">
+    <div class="set-in">
+      <div class="set-head"><h2 id="settings-title">Settings</h2><button type="button" class="x" id="close-settings" aria-label="Close settings">×</button></div>
+
+      <div class="set-group">
+        <span class="legend">Appearance</span>
+        <div class="seg" role="group" aria-label="Theme" id="set-theme">
+          <button type="button" data-v="system">System</button>
+          <button type="button" data-v="light">Light</button>
+          <button type="button" data-v="dark">Dark</button>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <span class="legend">Accent color</span>
+        <div class="swatches" role="group" aria-label="Accent color" id="set-accent"></div>
+      </div>
+
+      <div class="set-group">
+        <span class="legend">Text size</span>
+        <div class="seg" role="group" aria-label="Text size" id="set-size">
+          <button type="button" data-v="15">Small</button>
+          <button type="button" data-v="17">Default</button>
+          <button type="button" data-v="19">Large</button>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <span class="legend">Units</span>
+        <div class="seg" role="group" aria-label="Units" id="set-units">
+          <button type="button" data-v="us">US cups · °F</button>
+          <button type="button" data-v="metric">Metric · °C</button>
+        </div>
+      </div>
+
+      <div class="set-group">
+        <span class="legend">Kitchen</span>
+        <label class="toggle" for="set-sound"><span>Timer sound<small>Beep when a step timer finishes.</small></span><input type="checkbox" id="set-sound"></label>
+        <label class="toggle" for="set-compact"><span>Compact layout<small>Tighter spacing to fit more on screen.</small></span><input type="checkbox" id="set-compact"></label>
+        <label class="toggle" for="set-motion"><span>Reduce motion<small>Turn off animations.</small></span><input type="checkbox" id="set-motion"></label>
+      </div>
+
+      <div class="set-group">
+        <span class="legend">Opens to</span>
+        <div class="seg" role="group" aria-label="Opens to" id="set-start">
+          <button type="button" data-v="last">Last used</button>
+          <button type="button" data-v="recipe">Recipe</button>
+          <button type="button" data-v="plan">Athlete diet</button>
+        </div>
+      </div>
+
+      <div class="danger">
+        <button type="button" class="btn-ghost" id="reset-settings">Reset settings</button>
+        <button type="button" class="btn-ghost warn" id="clear-box">Clear recipe box</button>
+        <p class="note" id="danger-note">Settings and your recipe box are saved in this browser only.</p>
+      </div>
+    </div>
+  </dialog>
 
   <div class="bench">
     <form class="ticket" id="brief" autocomplete="off">
@@ -735,6 +830,7 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
   // ---------- Timers ----------
   let audioCtx = null;
   function beep() {
+    if (!settings.sound) return;
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
       [0, 0.35, 0.7].forEach(t => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(audioCtx.destination); o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.2); });
@@ -981,6 +1077,74 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   function bumpTicket() { const n = store.get("tk-ticket", 1) + 1; store.set("tk-ticket", n); paintTicket(); }
   function paintTicket() { $("#ticket-no").textContent = "No. " + String(store.get("tk-ticket", 1)).padStart(3, "0"); }
 
+  // ---------- Settings ----------
+  const ACCENTS = {
+    basil:   { name: "Basil",   l: ["#2f6b4f", "#e1ece4"], d: ["#7cc49f", "#23362c"] },
+    ocean:   { name: "Ocean",   l: ["#1f5f8b", "#dfeaf3"], d: ["#7fb6e0", "#1c2c3a"] },
+    tomato:  { name: "Tomato",  l: ["#b0412a", "#f6e1db"], d: ["#f0927a", "#3a2420"] },
+    plum:    { name: "Plum",    l: ["#6a3d7a", "#ece1f0"], d: ["#c49ad4", "#2f2236"] },
+    saffron: { name: "Saffron", l: ["#8a6210", "#f6ecd2"], d: ["#e8c060", "#352c18"] },
+    slate:   { name: "Slate",   l: ["#3b4a5a", "#e3e8ee"], d: ["#a9b8c8", "#252c34"] }
+  };
+  const DEFAULTS = { theme: "system", accent: "basil", size: 17, sound: true, compact: false, motion: false, start: "last" };
+  let settings = Object.assign({}, DEFAULTS, store.get("tk-settings", {}));
+  const root = document.documentElement;
+  const hostTheme = root.getAttribute("data-theme");
+  const accentStyle = document.createElement("style"); accentStyle.id = "accent-style"; document.body.append(accentStyle);
+
+  function applySettings() {
+    if (settings.theme === "system") { hostTheme ? root.setAttribute("data-theme", hostTheme) : root.removeAttribute("data-theme"); }
+    else root.setAttribute("data-theme", settings.theme);
+    const a = ACCENTS[settings.accent] || ACCENTS.basil;
+    const vars = ([c, s]) => `--basil:${c};--basil-soft:${s};`;
+    accentStyle.textContent = `:root{${vars(a.l)}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${vars(a.d)}}}:root[data-theme="dark"]{${vars(a.d)}}`;
+    root.style.fontSize = (settings.size / 17 * 16) + "px";
+    document.body.style.fontSize = settings.size + "px";
+    root.classList.toggle("compact", !!settings.compact);
+    root.classList.toggle("no-motion", !!settings.motion);
+    paintSettings();
+  }
+  function saveSettings() { store.set("tk-settings", settings); applySettings(); }
+  function pressSeg(id, v) { document.querySelectorAll("#" + id + " button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(v)))); }
+  function paintSettings() {
+    pressSeg("set-theme", settings.theme); pressSeg("set-size", settings.size); pressSeg("set-units", state.units); pressSeg("set-start", settings.start);
+    document.querySelectorAll("#set-accent .swatch").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === settings.accent)));
+    $("#set-sound").checked = !!settings.sound; $("#set-compact").checked = !!settings.compact; $("#set-motion").checked = !!settings.motion;
+  }
+  Object.entries(ACCENTS).forEach(([k, a]) => {
+    const b = el("button", "swatch"); b.type = "button"; b.dataset.v = k; b.id = "accent-" + k;
+    const dot = el("i"); dot.style.setProperty("--sw", a.l[0]);
+    b.append(dot, a.name); b.onclick = () => { settings.accent = k; saveSettings(); };
+    $("#set-accent").append(b);
+  });
+  const segWire = (id, fn) => document.querySelectorAll("#" + id + " button").forEach(b => b.onclick = () => fn(b.dataset.v));
+  segWire("set-theme", v => { settings.theme = v; saveSettings(); });
+  segWire("set-size", v => { settings.size = Number(v); saveSettings(); });
+  segWire("set-start", v => { settings.start = v; saveSettings(); });
+  segWire("set-units", v => setUnits(v));
+  $("#set-sound").onchange = e => { settings.sound = e.target.checked; saveSettings(); };
+  $("#set-compact").onchange = e => { settings.compact = e.target.checked; saveSettings(); };
+  $("#set-motion").onchange = e => { settings.motion = e.target.checked; saveSettings(); };
+  $("#reset-settings").onclick = () => { settings = Object.assign({}, DEFAULTS); setUnits("us"); saveSettings(); $("#danger-note").textContent = "Settings reset."; };
+  let clearArmed = false;
+  $("#clear-box").onclick = () => {
+    const b = $("#clear-box");
+    if (!clearArmed) { clearArmed = true; b.textContent = "Tap again to delete all"; setTimeout(() => { clearArmed = false; b.textContent = "Clear recipe box"; }, 4000); return; }
+    clearArmed = false; store.set("tk-saved", []); renderSaved(); render(); b.textContent = "Clear recipe box";
+    $("#danger-note").textContent = "Recipe box cleared.";
+  };
+  const dlg = $("#settings");
+  $("#open-settings").onclick = () => { paintSettings(); $("#danger-note").textContent = "Settings and your recipe box are saved in this browser only."; try { dlg.showModal(); } catch { dlg.setAttribute("open", ""); } };
+  $("#close-settings").onclick = () => dlg.close();
+  dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+
+  function setUnits(u) {
+    state.units = u; store.set("tk-units", u);
+    document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === u)));
+    pressSeg("set-units", u);
+    paintUnits(); render();
+  }
+
   // ---------- Wiring ----------
   function paintUnits() {
     const m = state.units === "metric";
@@ -1000,11 +1164,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   }
   document.querySelectorAll(".mode button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
   document.querySelectorAll("#sport-ideas button").forEach(b => b.onclick = () => { $("#sport").value = b.textContent; $("#sport").focus(); });
-  document.querySelectorAll(".units button").forEach(b => b.onclick = () => {
-    state.units = b.dataset.u; store.set("tk-units", state.units);
-    document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-    paintUnits(); render();
-  });
+  document.querySelectorAll(".units button").forEach(b => b.onclick = () => setUnits(b.dataset.u));
   document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
   document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
   document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; $("#dish").focus(); });
@@ -1012,8 +1172,9 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
-  paintTicket(); renderSaved(); paintUnits();
-  if (store.get("tk-mode", "recipe") === "plan") setMode("plan"); else render();
+  applySettings(); paintTicket(); renderSaved(); paintUnits();
+  const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
+  if (startMode === "plan") setMode("plan"); else render();
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
