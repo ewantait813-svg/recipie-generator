@@ -40,6 +40,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--paper); color: var(--ink);
   font-family: var(--body); font-size: 17px; line-height: 1.55;
@@ -159,13 +160,56 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
 @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
 @media (prefers-reduced-motion: reduce) { .pan i { animation: none; width: 100%; opacity: 0.5; } }
 .cooking p { color: var(--muted); margin: 0; font-family: var(--mono); font-size: 14px; }
+
+/* Mode switch */
+.mode { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.mode button { border: 0; background: var(--paper); padding: 9px 10px; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 15px; }
+.mode button + button { border-left: 1px solid var(--line); }
+.mode button[aria-pressed="true"] { background: var(--basil); color: var(--card); }
+.fields { display: grid; gap: 18px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.field input[type="number"] { width: 100%; border: 1px solid var(--line); background: var(--paper); border-radius: 4px; padding: 10px 12px; font-size: 16px; font-family: var(--mono); }
+
+/* Athlete plan card */
+.targets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+@media (max-width: 620px) { .targets { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.target { padding: 16px 18px; border-right: 1px solid var(--line); display: grid; gap: 2px; min-width: 0; }
+.target:last-child { border-right: 0; }
+.target b { font-family: var(--mono); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.target span { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.target small { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.why { padding: 20px 28px; border-bottom: 1px solid var(--line); background: var(--basil-soft); }
+.why ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.fuel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+@media (max-width: 620px) { .fuel { grid-template-columns: minmax(0, 1fr); } }
+.fuel > div { padding: 18px 22px; border-right: 1px solid var(--line); min-width: 0; }
+.fuel > div:last-child { border-right: 0; }
+@media (max-width: 620px) { .fuel > div { border-right: 0; border-bottom: 1px solid var(--line); } }
+.fuel h4 { margin: 0; font-family: var(--display); font-size: 1.05rem; }
+.fuel .when { font-family: var(--mono); font-size: 12.5px; color: var(--basil); margin: 2px 0 6px; }
+.fuel ul { margin: 0; padding-left: 18px; font-size: 15.5px; }
+.daytabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 18px 28px 0; }
+.meals { padding: 16px 28px 24px; display: grid; gap: 0; }
+.meal { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.meal:last-child { border-bottom: 0; }
+@media (max-width: 560px) { .meal { grid-template-columns: 52px minmax(0, 1fr); } .meal .mac { grid-column: 2; } }
+.meal .t { font-family: var(--mono); font-size: 13px; color: var(--muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.meal h4 { margin: 0 0 4px; font-family: var(--display); font-size: 1.05rem; }
+.meal ul { margin: 0; padding-left: 18px; font-size: 15.5px; }
+.meal .cook { margin-top: 8px; border: 0; background: none; color: var(--basil); cursor: pointer; padding: 0; font-family: var(--display); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+.mac { font-family: var(--mono); font-size: 12.5px; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; line-height: 1.6; }
+.mac b { color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) { .mac { text-align: left; } }
+.daysum { font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding: 0 28px; }
+.caution { border-top: 1px solid var(--line); padding: 18px 28px; background: var(--saffron-soft); font-size: 15px; }
+.caution ul { margin: 6px 0 0; padding-left: 18px; }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="brand">
       <h1>Test <span>Kitchen</span></h1>
-      <p>Describe any dish. Claude develops a full recipe with tested ratios, doneness cues and timings, then adjusts it however you like.</p>
+      <p>Describe any dish and Claude develops a full recipe with tested ratios, doneness cues and timings. Or tell it your sport and get a fueling plan built around your training.</p>
     </div>
     <div class="units" role="group" aria-label="Measurement units">
       <button type="button" id="u-us" data-u="us" aria-pressed="true">US cups · °F</button>
@@ -177,6 +221,77 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
     <form class="ticket" id="brief" autocomplete="off">
       <div class="ticket-head"><h2>Order ticket</h2><small id="ticket-no">No. 001</small></div>
 
+      <div class="mode" role="group" aria-label="What to make">
+        <button type="button" id="mode-recipe" data-mode="recipe" aria-pressed="true">Recipe</button>
+        <button type="button" id="mode-plan" data-mode="plan" aria-pressed="false">Athlete diet</button>
+      </div>
+
+      <div class="fields" id="plan-fields" hidden>
+        <div class="field">
+          <label for="sport">Your sport</label>
+          <input type="text" id="sport" placeholder="Soccer" maxlength="80">
+          <div class="ideas" id="sport-ideas">
+            <button type="button">Soccer</button>
+            <button type="button">Basketball</button>
+            <button type="button">Distance running</button>
+            <button type="button">Wrestling</button>
+            <button type="button">Swimming</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="position">Position or event (optional)</label>
+          <input type="text" id="position" placeholder="Center midfielder" maxlength="80">
+        </div>
+        <div class="row3">
+          <div class="field"><label for="age">Age</label><input type="number" id="age" min="8" max="90" placeholder="16"></div>
+          <div class="field"><label for="weight" id="weight-label">Weight (lb)</label><input type="number" id="weight" min="40" max="700" placeholder="140"></div>
+          <div class="field"><label for="height">Height</label><input type="text" id="height" placeholder="5'9&quot;" maxlength="20"></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="sex">Sex</label>
+            <select id="sex"><option value="">Prefer not to say</option><option>Male</option><option>Female</option></select>
+          </div>
+          <div class="field">
+            <label for="days">Training days / week</label>
+            <select id="days"><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="load">Typical session</label>
+            <select id="load">
+              <option value="about 1 hour, moderate intensity">~1 hr, moderate</option>
+              <option value="about 90 minutes, high intensity" selected>~90 min, hard</option>
+              <option value="2 or more hours, or two-a-days">2+ hrs / two-a-days</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="phase">Season</label>
+            <select id="phase">
+              <option value="in-season with weekly games">In-season</option>
+              <option value="off-season, building strength and size">Off-season</option>
+              <option value="pre-season, high training volume">Pre-season</option>
+              <option value="tournament weekend with multiple games per day">Tournament</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="goal">Main goal</label>
+          <select id="goal">
+            <option value="fuel performance and recovery">Perform and recover better</option>
+            <option value="gain lean muscle">Gain muscle</option>
+            <option value="lean out gradually while keeping performance">Lean out (gently)</option>
+            <option value="more energy late in games and practices">More late-game energy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="foods">Allergies, dislikes or schedule (optional)</label>
+          <textarea id="foods" placeholder="No fish. School lunch at 11:30, practice 4–6pm."></textarea>
+        </div>
+      </div>
+
+      <div class="fields" id="recipe-fields">
       <div class="field">
         <label for="dish">What are we making?</label>
         <input type="text" id="dish" placeholder="Crispy pork carnitas tacos" maxlength="160">
@@ -228,6 +343,7 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
           </select>
         </div>
       </div>
+      </div>
 
       <div class="field">
         <span class="legend" id="diet-label">Dietary needs</span>
@@ -243,7 +359,7 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
         </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="pantry-field">
         <label for="pantry">Use what I have (optional)</label>
         <textarea id="pantry" placeholder="2 chicken thighs, half a bag of spinach, feta, no oven"></textarea>
         <div class="photo" id="photo-row" hidden>
@@ -323,13 +439,57 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
     pairings: ["Basmati rice", "Garlic naan", "Quick cucumber raita"]
   };
 
+  const EXAMPLE_PLAN = {
+    kind: "plan",
+    title: "In-Season Midfielder Fuel Plan",
+    summary: "For a 16-year-old center midfielder, 140 lb, training 5 days a week for about 90 minutes. Built to cover high running volume, keep energy up in the second half and support growth.",
+    sport: "Soccer",
+    targets: { calories: 3050, protein_g: 135, carbs_g: 420, fat_g: 85, water_l: 3 },
+    rationale: [
+      "Midfielders cover the most ground on the field, so carbohydrate is the main fuel: about 6.5 g per kg of body weight on training days.",
+      "Protein at about 2 g/kg, spread over 4–5 meals, supports recovery and growth.",
+      "No calorie deficit: a growing athlete in season needs to eat enough to train, recover and grow."
+    ],
+    training_fuel: {
+      before: { timing: "2–3 hrs before", ideas: ["A normal carb-based meal", "Or 60–90 min before: bagel with honey, banana, applesauce pouch"] },
+      during: { timing: "Sessions over 60 min", ideas: ["Water every break", "Sports drink in hot weather or for long sessions"] },
+      after: { timing: "Within 1 hr", ideas: ["16 oz chocolate milk + fruit", "Then a full meal within 2 hours"] }
+    },
+    days: [
+      { name: "Training day", meals: [
+        { time: "7:00", name: "Peanut butter banana oats", items: ["1 cup oats cooked in 1 cup milk", "1 banana, sliced", "2 tbsp peanut butter", "2 scrambled eggs"], kcal: 750, protein_g: 35, carbs_g: 95, fat_g: 27 },
+        { time: "12:00", name: "Chicken burrito bowl", items: ["1½ cups rice", "4 oz grilled chicken", "½ cup black beans", "Salsa, cheese, lettuce"], kcal: 770, protein_g: 42, carbs_g: 105, fat_g: 18 },
+        { time: "15:00", name: "Pre-practice snack", items: ["1 bagel with honey", "1 applesauce pouch", "Water"], kcal: 380, protein_g: 10, carbs_g: 80, fat_g: 2 },
+        { time: "18:15", name: "Recovery", items: ["16 oz chocolate milk", "1 banana"], kcal: 485, protein_g: 17, carbs_g: 79, fat_g: 10 },
+        { time: "19:30", name: "Salmon, potatoes and broccoli", items: ["4 oz baked salmon", "1½ cups roasted potatoes", "1 cup broccoli with olive oil"], kcal: 665, protein_g: 32, carbs_g: 60, fat_g: 28 }
+      ]},
+      { name: "Game day", meals: [
+        { time: "Kickoff −3.5 h", name: "Chicken pasta marinara", items: ["2 cups pasta", "4 oz chicken", "Marinara sauce", "Low fat and fiber so it digests fast"], kcal: 750, protein_g: 40, carbs_g: 115, fat_g: 12 },
+        { time: "Kickoff −1 h", name: "Top-up", items: ["1 banana", "8–12 oz sports drink"], kcal: 180, protein_g: 1, carbs_g: 45, fat_g: 0 },
+        { time: "Halftime", name: "Quick carbs", items: ["Orange slices", "Water or sports drink"], kcal: 80, protein_g: 1, carbs_g: 20, fat_g: 0 },
+        { time: "Final whistle", name: "Recovery", items: ["16 oz chocolate milk", "Turkey sandwich within 2 hours"], kcal: 750, protein_g: 45, carbs_g: 95, fat_g: 18 }
+      ]}
+    ],
+    hydration: ["Drink 16–20 oz of water 2 hours before training.", "Pale yellow urine means you're hydrated.", "Weigh in before and after hot sessions; drink 16–24 oz for every pound lost."],
+    snacks: ["Trail mix", "Greek yogurt with granola", "PB&J", "Cheese stick and pretzels", "Fig bars"],
+    grocery: [
+      { aisle: "Produce", items: ["Bananas", "Oranges", "Potatoes", "Broccoli", "Lettuce"] },
+      { aisle: "Protein and dairy", items: ["Chicken breast", "Salmon", "Eggs", "Milk", "Chocolate milk", "Greek yogurt", "Cheese"] },
+      { aisle: "Pantry", items: ["Oats", "Rice", "Pasta", "Bagels", "Black beans", "Peanut butter", "Honey", "Marinara"] }
+    ],
+    cautions: ["Youth athletes should not cut calories or weight for sport without a doctor or registered dietitian.", "Food first: supplements aren't needed at this age."]
+  };
+
   // ---------- State ----------
   let state = {
+    view: "recipe",
     recipe: EXAMPLE, isExample: true,
+    plan: EXAMPLE_PLAN, planExample: true, day: 0,
     servings: EXAMPLE.servings,
     units: store.get("tk-units", "us"),
     checked: new Set()
   };
+  let mode = "recipe";
   let sample = null, canImages = false, ctl = null, photoFile = null;
   const timers = new Map();
 
@@ -381,7 +541,105 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
     parts.forEach((part, i) => { if (i % 2) p.append(el("span", "temp", temp(part))); else p.append(part); });
   }
 
+  function listBlock(title, items) {
+    const d = el("div"); d.append(el("h3", "sec-title", title));
+    const ul = el("ul"); items.forEach(t => ul.append(el("li", null, t))); d.append(ul); return d;
+  }
+  const water = l => state.units === "metric" ? trim(Number(l)) + " L" : Math.round(Number(l) * 33.814 / 5) * 5 + " oz";
+  const n0 = v => v == null || v === "" ? "—" : String(Math.round(Number(v)));
+
+  function renderPlan() {
+    const p = state.plan, t = p.targets || {};
+    card.replaceChildren();
+    const top = el("div", "card-top");
+    top.append(el("span", "flag", state.planExample ? "Example plan" : (p.sport || "Athlete") + " fuel plan"));
+    top.append(el("h2", null, p.title || "Fuel plan"));
+    if (p.summary) top.append(el("p", "desc", p.summary));
+    const act = el("div", "card-actions");
+    const saveB = el("button", "btn-ghost", isSaved(p) ? "Saved to recipe box" : "Save to recipe box"); saveB.type = "button";
+    saveB.onclick = () => { saveRecipe(p); saveB.textContent = "Saved to recipe box"; };
+    const copyB = el("button", "btn-ghost", "Copy as text"); copyB.type = "button";
+    copyB.onclick = () => copyText(copyB);
+    act.append(saveB, copyB); top.append(act);
+    card.append(top);
+
+    const tg = el("div", "targets");
+    const tgt = (label, v, sub) => { const d = el("div", "target"); d.append(el("b", null, v), el("span", null, label)); if (sub) d.append(el("small", null, sub)); return d; };
+    tg.append(tgt("Calories / day", n0(t.calories)), tgt("Protein", n0(t.protein_g) + " g"), tgt("Carbs", n0(t.carbs_g) + " g"), tgt("Fat", n0(t.fat_g) + " g"), tgt("Fluids", t.water_l ? water(t.water_l) : "—", "plus sweat losses"));
+    card.append(tg);
+
+    if (p.rationale?.length) { const w = el("section", "why"); w.append(listBlock("Why these numbers", p.rationale)); card.append(w); }
+
+    const tf = p.training_fuel;
+    if (tf) {
+      const f = el("section", "fuel");
+      [["Before", tf.before], ["During", tf.during], ["After", tf.after]].forEach(([name, x]) => {
+        if (!x) return;
+        const d = el("div"); d.append(el("h4", null, name + " training"));
+        if (x.timing) d.append(el("p", "when", x.timing));
+        const ul = el("ul"); (x.ideas || []).forEach(i => ul.append(el("li", null, i))); d.append(ul); f.append(d);
+      });
+      card.append(f);
+    }
+
+    const days = p.days || [];
+    if (days.length) {
+      if (state.day >= days.length) state.day = 0;
+      const tabs = el("div", "daytabs"); tabs.setAttribute("role", "group"); tabs.setAttribute("aria-label", "Day type");
+      days.forEach((d, i) => { const b = el("button", "chip", d.name); b.type = "button"; b.id = "day-" + i; b.setAttribute("aria-pressed", String(i === state.day)); b.onclick = () => { state.day = i; renderPlan(); }; tabs.append(b); });
+      card.append(tabs);
+      const day = days[state.day], meals = el("div", "meals");
+      const sum = { kcal: 0, p: 0, c: 0, f: 0 };
+      (day.meals || []).forEach(m => {
+        sum.kcal += +m.kcal || 0; sum.p += +m.protein_g || 0; sum.c += +m.carbs_g || 0; sum.f += +m.fat_g || 0;
+        const row = el("div", "meal");
+        row.append(el("div", "t", m.time || ""));
+        const mid = el("div"); mid.append(el("h4", null, m.name));
+        const ul = el("ul"); (m.items || []).forEach(i => ul.append(el("li", null, i))); mid.append(ul);
+        const cook = el("button", "cook", "Cook this as a recipe"); cook.type = "button";
+        cook.onclick = () => cookMeal(m);
+        mid.append(cook); row.append(mid);
+        const mac = el("div", "mac");
+        if (m.kcal != null) { mac.append(el("b", null, n0(m.kcal) + " kcal")); mac.append(el("br")); mac.append(`P ${n0(m.protein_g)} · C ${n0(m.carbs_g)} · F ${n0(m.fat_g)}`); }
+        row.append(mac); meals.append(row);
+      });
+      card.append(meals);
+      if (sum.kcal) card.append(el("p", "daysum", `Day total ≈ ${Math.round(sum.kcal)} kcal · ${Math.round(sum.p)} g protein · ${Math.round(sum.c)} g carbs · ${Math.round(sum.f)} g fat`));
+    }
+
+    const notes = el("section", "notes");
+    if (p.hydration?.length) notes.append(listBlock("Hydration", p.hydration));
+    if (p.snacks?.length) notes.append(listBlock("Snacks to keep in your bag", p.snacks));
+    (p.grocery || []).forEach(g => notes.append(listBlock("Grocery · " + g.aisle, g.items || [])));
+    if (notes.childNodes.length) card.append(notes);
+
+    const caut = el("section", "caution");
+    caut.append(listBlock("Before you start", [...(p.cautions || []), "This is general guidance from AI, not medical advice. Check with a doctor or sports dietitian, especially for athletes under 18 or with health conditions."]));
+    card.append(caut);
+
+    const ref = el("section", "refine");
+    ref.append(el("h3", "sec-title", "Adjust this plan"));
+    const f = el("form"); f.id = "refine-plan-form";
+    const inp = el("input"); inp.id = "refine-plan-input"; inp.type = "text"; inp.placeholder = "Practice moved to 6am, and I'm vegetarian"; inp.setAttribute("aria-label", "How should the plan change?");
+    const b = el("button", "btn", "Revise"); b.type = "submit"; b.style.padding = "10px 16px"; b.style.fontSize = "1rem";
+    f.append(inp, b);
+    f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (v) refinePlan(v); };
+    const ideas = el("div", "ideas");
+    ["Add a tournament day", "Make it cheaper", "Cafeteria-friendly lunches", "Add a rest day"].forEach(t => { const x = el("button", null, t); x.type = "button"; x.onclick = () => refinePlan(t); ideas.append(x); });
+    ref.append(f, ideas);
+    card.append(ref);
+  }
+
+  function planText() {
+    const p = state.plan, t = p.targets || {};
+    const L = [p.title, p.summary || "", "", `Daily targets: ${n0(t.calories)} kcal · ${n0(t.protein_g)} g protein · ${n0(t.carbs_g)} g carbs · ${n0(t.fat_g)} g fat · ${t.water_l ? water(t.water_l) : "—"} fluids`, ""];
+    (p.days || []).forEach(d => { L.push(d.name.toUpperCase()); (d.meals || []).forEach(m => L.push(`${m.time || ""}  ${m.name}: ${(m.items || []).join(", ")}`)); L.push(""); });
+    if (p.hydration?.length) { L.push("HYDRATION"); p.hydration.forEach(h => L.push("- " + h)); }
+    return L.join("\n");
+  }
+
   function render() {
+    if (state.view === "plan") return renderPlan();
     const r = state.recipe, mult = state.servings / (r.servings || 1);
     card.replaceChildren();
     const top = el("div", "card-top");
@@ -516,7 +774,7 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
     return lines.join("\n");
   }
   function copyText(btn) {
-    const txt = asText();
+    const txt = state.view === "plan" ? planText() : asText();
     const done = () => { btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy as text", 1600); };
     try {
       navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, btn));
@@ -528,9 +786,9 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
   }
 
   // ---------- Recipe box (this browser only) ----------
-  const keyOf = r => (r.title || "") + "|" + (r.servings || "");
+  const keyOf = r => (r.kind || "recipe") + "|" + (r.title || "") + "|" + (r.servings || "");
   const getSaved = () => store.get("tk-saved", []);
-  const isSaved = r => !state.isExample && getSaved().some(x => keyOf(x) === keyOf(r));
+  const isSaved = r => !(r.kind === "plan" ? state.planExample : state.isExample) && getSaved().some(x => keyOf(x) === keyOf(r));
   function saveRecipe(r) {
     const list = getSaved().filter(x => keyOf(x) !== keyOf(r));
     list.unshift(r); store.set("tk-saved", list.slice(0, 40)); renderSaved();
@@ -541,8 +799,8 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
     $("#saved-empty").hidden = list.length > 0;
     list.forEach((r, i) => {
       const li = el("li");
-      const o = el("button", "open", r.title); o.type = "button";
-      o.onclick = () => show(r, false);
+      const o = el("button", "open", (r.kind === "plan" ? "Plan · " : "") + r.title); o.type = "button";
+      o.onclick = () => r.kind === "plan" ? showPlan(r, false) : show(r, false);
       const d = el("button", "del", "×"); d.type = "button"; d.setAttribute("aria-label", "Remove " + r.title);
       d.onclick = () => { const l = getSaved(); l.splice(i, 1); store.set("tk-saved", l); renderSaved(); };
       li.append(o, d); ul.append(li);
@@ -551,9 +809,23 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
 
   function show(r, isExample) {
     clearTimers();
+    state.view = "recipe";
     state.recipe = r; state.isExample = !!isExample; state.servings = r.servings || 4; state.checked = new Set();
     render();
     if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function showPlan(p, isExample) {
+    clearTimers();
+    state.view = "plan"; state.plan = p; state.planExample = !!isExample; state.day = 0;
+    render();
+    if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function cookMeal(m) {
+    setMode("recipe");
+    $("#dish").value = m.name + (m.items?.length ? " (" + m.items.join("; ") + ")" : "");
+    $("#servings").value = "1";
+    develop();
   }
 
   // ---------- Claude ----------
@@ -622,21 +894,71 @@ Temperatures inside step text: always write them as [[T:<celsius>]] (e.g. "roast
     if (!on) clearInterval(phaseTimer);
   }
 
-  async function ask(prompt, label, withPhoto) {
-    if (!sample) { setStatus("Claude isn't available in this view. Open the page on claude.ai to develop recipes.", true); return; }
-    const prev = { recipe: state.recipe, isExample: state.isExample, servings: state.servings };
+  const PLAN_SCHEMA = `Reply with ONLY one JSON object, no prose, in exactly this shape:
+{"title": string (short, e.g. "In-Season Midfielder Fuel Plan"), "summary": string (1-2 sentences naming who it's for), "sport": string,
+ "targets": {"calories": number, "protein_g": number, "carbs_g": number, "fat_g": number, "water_l": number} (training-day daily totals),
+ "rationale": [string] (3-4 short bullets explaining the numbers in g/kg terms),
+ "training_fuel": {"before": {"timing": string, "ideas": [string]}, "during": {"timing": string, "ideas": [string]}, "after": {"timing": string, "ideas": [string]}},
+ "days": [{"name": string, "meals": [{"time": string, "name": string (dish name, 2-5 words), "items": [string] (foods with portions), "kcal": number, "protein_g": number, "carbs_g": number, "fat_g": number}]}],
+ "hydration": [string], "snacks": [string], "grocery": [{"aisle": string, "items": [string]}], "cautions": [string]}
+Include these days: "Training day", "Game day" (or "Competition day"), and "Rest day". A training day's meals must add up to within 5% of the targets. Use real, easy-to-find foods.`;
+
+  const COACH = `You are a board-certified sports dietitian (CSSD) building a practical daily fueling plan.
+- Set targets from body weight, sport demands, position, training volume and season using current sports nutrition guidelines (carbohydrate scaled to load, roughly 3-10 g/kg; protein about 1.4-2.0 g/kg spread over 4-5 feedings; fat for the remainder, not below 20% of calories).
+- Time meals around the athlete's training: a carb-rich meal 2-4 h before, an easy-digesting snack 30-90 min before, protein + carbs within an hour after.
+- If the athlete is under 18 or the age is unknown: no calorie deficit beyond a very gradual one, no weight cutting, no supplements beyond food (a sports drink is fine), and stress calcium, iron and vitamin D. For weight-class sports, never advise rapid weight cutting; recommend a professional.
+- Respect every dietary restriction and allergy strictly.`;
+
+  function athleteBrief() {
+    const diets = [...document.querySelectorAll("#diet .chip[aria-pressed='true']")].map(b => b.textContent);
+    const wUnit = state.units === "metric" ? "kg" : "lb";
+    const L = ["Sport: " + $("#sport").value.trim()];
+    if ($("#position").value.trim()) L.push("Position/event: " + $("#position").value.trim());
+    if ($("#age").value) L.push("Age: " + $("#age").value);
+    if ($("#sex").value) L.push("Sex: " + $("#sex").value);
+    if ($("#weight").value) L.push(`Weight: ${$("#weight").value} ${wUnit}`);
+    if ($("#height").value.trim()) L.push("Height: " + $("#height").value.trim());
+    L.push(`Training: ${$("#days").value} days per week, sessions ${$("#load").value}`);
+    L.push("Season: " + $("#phase").value);
+    L.push("Goal: " + $("#goal").value);
+    if (diets.length) L.push("Dietary requirements (strict): " + diets.join(", "));
+    if ($("#foods").value.trim()) L.push("Notes from the athlete: " + $("#foods").value.trim());
+    L.push(`Write portions in ${state.units === "metric" ? "metric (g, ml)" : "US household measures (cups, oz, tbsp)"}.`);
+    return L.join("\n");
+  }
+
+  function validPlan(p) { return p && typeof p === "object" && p.targets && Array.isArray(p.days) && p.days.length; }
+
+  function buildPlan() {
+    if (!$("#sport").value.trim()) { setStatus("Enter the sport you play.", true); $("#sport").focus(); return; }
+    ask(COACH + "\n\nThe athlete:\n" + athleteBrief() + "\n\n" + PLAN_SCHEMA, "Building your " + $("#sport").value.trim().toLowerCase() + " plan", false, "plan");
+  }
+  function refinePlan(change) {
+    ask(COACH + "\n\nHere is the current plan as JSON:\n" + JSON.stringify(state.plan) + "\n\nRevise it with this change: " + change +
+      "\nKeep what the change doesn't affect, and re-check that meals still add up to the targets.\n\n" + PLAN_SCHEMA, "Revising: " + change, false, "plan");
+  }
+
+  async function ask(prompt, label, withPhoto, kind = "recipe") {
+    if (!sample) { setStatus("Claude isn't available in this view. Open the page on claude.ai to use it.", true); return; }
+    const prev = { view: state.view, recipe: state.recipe, isExample: state.isExample, servings: state.servings, plan: state.plan, planExample: state.planExample };
     ctl = new AbortController();
     busy(true); setStatus(""); cooking(label);
     try {
       const opts = { signal: ctl.signal, modelTier: "default", cache: false };
       if (withPhoto && photoFile && canImages) opts.images = [photoFile];
       const r = await sample.json(prompt, opts);
-      if (!validRecipe(r)) throw { code: "invalid_json" };
-      bumpTicket();
-      show(r, false);
-      setStatus("Ready. Tap a timer when you start a step.");
+      if (kind === "plan") {
+        if (!validPlan(r)) throw { code: "invalid_json" };
+        r.kind = "plan";
+        bumpTicket(); showPlan(r, false);
+        setStatus("Plan ready. Tap a meal to cook it as a full recipe.");
+      } else {
+        if (!validRecipe(r)) throw { code: "invalid_json" };
+        bumpTicket(); show(r, false);
+        setStatus("Ready. Tap a timer when you start a step.");
+      }
     } catch (e) {
-      state.recipe = prev.recipe; state.isExample = prev.isExample; state.servings = prev.servings; render();
+      Object.assign(state, prev); render();
       if (e?.code !== "cancelled") setStatus(MSG[e?.code] || "Something went wrong reaching Claude. Try again.", true);
       else setStatus("Stopped.");
     } finally { busy(false); }
@@ -660,19 +982,38 @@ Temperatures inside step text: always write them as [[T:<celsius>]] (e.g. "roast
   function paintTicket() { $("#ticket-no").textContent = "No. " + String(store.get("tk-ticket", 1)).padStart(3, "0"); }
 
   // ---------- Wiring ----------
+  function paintUnits() {
+    const m = state.units === "metric";
+    $("#weight-label").textContent = "Weight (" + (m ? "kg" : "lb") + ")";
+    $("#weight").placeholder = m ? "64" : "140";
+    $("#height").placeholder = m ? "175 cm" : "5'9\"";
+  }
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll(".mode button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.mode === m)));
+    $("#plan-fields").hidden = m !== "plan";
+    $("#recipe-fields").hidden = m !== "recipe";
+    $("#pantry-field").hidden = m !== "recipe";
+    $("#make").textContent = m === "plan" ? "Build my diet plan" : "Develop recipe";
+    if (state.view !== m) { state.view = m; render(); }
+    store.set("tk-mode", m);
+  }
+  document.querySelectorAll(".mode button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  document.querySelectorAll("#sport-ideas button").forEach(b => b.onclick = () => { $("#sport").value = b.textContent; $("#sport").focus(); });
   document.querySelectorAll(".units button").forEach(b => b.onclick = () => {
     state.units = b.dataset.u; store.set("tk-units", state.units);
     document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-    render();
+    paintUnits(); render();
   });
   document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
   document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
   document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; $("#dish").focus(); });
-  $("#brief").onsubmit = e => { e.preventDefault(); develop(); };
+  $("#brief").onsubmit = e => { e.preventDefault(); mode === "plan" ? buildPlan() : develop(); };
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
-  paintTicket(); renderSaved(); render();
+  paintTicket(); renderSaved(); paintUnits();
+  if (store.get("tk-mode", "recipe") === "plan") setMode("plan"); else render();
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
