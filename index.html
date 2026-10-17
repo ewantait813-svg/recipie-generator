@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Test Kitchen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a two-column test-kitchen bench. Order ticket (the brief) on the left, the recipe card on the right; stacks on phones. */
+:root {
+  --paper: #f3f5ef;
+  --card: #fdfdfa;
+  --ink: #1d2a23;
+  --muted: #5f6d64;
+  --line: #d7ddd2;
+  --basil: #2f6b4f;
+  --basil-soft: #e1ece4;
+  --saffron: #e3a71f;
+  --saffron-soft: #fbf0d3;
+  --warn: #a8432c;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141a17; --card: #1c2420; --ink: #e8ede7; --muted: #9aa89f; --line: #2f3a34;
+    --basil: #7cc49f; --basil-soft: #23362c; --saffron: #f0be4a; --saffron-soft: #3a3120; --warn: #e88a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141a17; --card: #1c2420; --ink: #e8ede7; --muted: #9aa89f; --line: #2f3a34;
+  --basil: #7cc49f; --basil-soft: #23362c; --saffron: #f0be4a; --saffron-soft: #3a3120; --warn: #e88a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.brand h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 800; letter-spacing: -0.02em; }
+.brand h1 span { color: var(--basil); }
+.brand p { margin: 6px 0 0; color: var(--muted); max-width: 52ch; }
+.units { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--card); }
+.units button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; cursor: pointer; font-family: var(--mono); font-size: 13px; }
+.units button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.bench { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 860px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+/* Order ticket */
+.ticket { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 22px; display: grid; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+@media (max-width: 860px) { .ticket { position: static; } }
+.ticket-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px dashed var(--line); padding-bottom: 12px; }
+.ticket-head h2 { font-size: 1.15rem; letter-spacing: 0.01em; }
+.ticket-head small { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, .legend { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.field input[type="text"], .field textarea, .field select {
+  width: 100%; border: 1px solid var(--line); background: var(--paper); border-radius: 4px; padding: 10px 12px; font-size: 16px;
+}
+.field textarea { resize: vertical; min-height: 64px; }
+#dish { font-family: var(--display); font-size: 1.25rem; font-weight: 600; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 5px 11px; font-size: 14px; cursor: pointer; font-family: var(--display); }
+.chip[aria-pressed="true"] { background: var(--basil); border-color: var(--basil); color: var(--card); }
+.ideas { display: flex; flex-wrap: wrap; gap: 6px; }
+.ideas button { border: 0; background: none; color: var(--basil); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 0; font-size: 14px; margin-right: 8px; }
+.photo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.photo label.btn-ghost { cursor: pointer; }
+.btn { border: 0; border-radius: 4px; padding: 13px 18px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; cursor: pointer; background: var(--ink); color: var(--paper); }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn-ghost { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 7px 12px; font-family: var(--display); font-size: 14px; cursor: pointer; }
+.go { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.status { font-family: var(--mono); font-size: 13px; color: var(--muted); min-height: 1.2em; }
+.status.err { color: var(--warn); }
+.saved { display: grid; gap: 6px; border-top: 2px dashed var(--line); padding-top: 14px; }
+.saved ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.saved li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.saved li button.open { border: 0; background: none; text-align: left; cursor: pointer; padding: 2px 0; font-family: var(--display); font-size: 15px; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.saved li button.del { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
+.empty-note { color: var(--muted); font-size: 14px; margin: 0; }
+
+/* Recipe card */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; min-width: 0; overflow: hidden; }
+.card-top { padding: 28px 28px 22px; display: grid; gap: 12px; border-bottom: 1px solid var(--line); }
+.flag { justify-self: start; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; background: var(--saffron-soft); color: var(--ink); padding: 3px 8px; border-radius: 3px; }
+.card-top h2 { font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 800; letter-spacing: -0.02em; }
+.card-top .desc { margin: 0; max-width: 62ch; font-size: 1.05rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 4px; margin-top: 6px; }
+.stat { padding: 10px 16px; display: grid; gap: 2px; border-right: 1px solid var(--line); min-width: 0; }
+.stat:last-child { border-right: 0; }
+.stat b { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.stat span { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.serv { display: inline-flex; align-items: center; gap: 6px; }
+.serv button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); cursor: pointer; line-height: 1; font-family: var(--mono); }
+.card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.card-body { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr); }
+@media (max-width: 720px) { .card-body { grid-template-columns: minmax(0, 1fr); } }
+.ingredients { padding: 24px 28px; border-right: 1px solid var(--line); background: var(--basil-soft); display: grid; gap: 18px; align-content: start; }
+@media (max-width: 720px) { .ingredients { border-right: 0; border-bottom: 1px solid var(--line); } }
+.method { padding: 24px 28px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.sec-title { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.group h3 { font-size: 1rem; margin-bottom: 8px; }
+.group ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
+.ing { display: grid; grid-template-columns: 18px minmax(70px, auto) 1fr; gap: 10px; align-items: baseline; cursor: pointer; }
+.ing input { margin: 0; accent-color: var(--basil); transform: translateY(2px); }
+.ing .q { font-family: var(--mono); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ing .n small { color: var(--muted); font-style: italic; }
+.ing.done .n, .ing.done .q { text-decoration: line-through; opacity: 0.5; }
+.equip { font-size: 15px; color: var(--muted); margin: 0; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; counter-reset: s; }
+ol.steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; counter-increment: s; }
+ol.steps li::before { content: counter(s); font-family: var(--display); font-weight: 800; font-size: 1.5rem; color: var(--basil); line-height: 1.1; }
+.step h4 { margin: 0 0 4px; font-family: var(--display); font-size: 1.05rem; }
+.step p { margin: 0; }
+.step .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.temp { font-family: var(--mono); font-weight: 600; font-size: 0.92em; background: var(--saffron-soft); padding: 0 4px; border-radius: 3px; white-space: nowrap; }
+.timer { font-family: var(--mono); font-size: 13px; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 4px 11px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.timer.running { background: var(--saffron); border-color: var(--saffron); color: #1d2a23; }
+.timer.rang { background: var(--warn); border-color: var(--warn); color: var(--card); }
+
+.notes { border-top: 1px solid var(--line); padding: 24px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+.notes ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 6px; }
+.notes p { margin: 6px 0 0; }
+.nutri { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.nutri div { border: 1px solid var(--line); border-radius: 4px; padding: 6px; text-align: center; }
+.nutri b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.nutri span { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+.fine { font-size: 13px; color: var(--muted); }
+
+.refine { border-top: 2px dashed var(--line); padding: 20px 28px 26px; display: grid; gap: 10px; background: var(--paper); }
+.refine form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.refine input { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 10px 12px; font-size: 16px; min-width: 0; }
+.refine .ideas button { font-size: 13.5px; }
+
+.cooking { padding: 60px 28px; display: grid; gap: 14px; justify-items: start; }
+.cooking h2 { font-size: 1.8rem; }
+.pan { width: 100%; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.pan i { display: block; height: 100%; width: 30%; background: var(--saffron); border-radius: 3px; animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+@media (prefers-reduced-motion: reduce) { .pan i { animation: none; width: 100%; opacity: 0.5; } }
+.cooking p { color: var(--muted); margin: 0; font-family: var(--mono); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Test <span>Kitchen</span></h1>
+      <p>Describe any dish. Claude develops a full recipe with tested ratios, doneness cues and timings, then adjusts it however you like.</p>
+    </div>
+    <div class="units" role="group" aria-label="Measurement units">
+      <button type="button" id="u-us" data-u="us" aria-pressed="true">US cups · °F</button>
+      <button type="button" id="u-metric" data-u="metric" aria-pressed="false">Metric · °C</button>
+    </div>
+  </header>
+
+  <div class="bench">
+    <form class="ticket" id="brief" autocomplete="off">
+      <div class="ticket-head"><h2>Order ticket</h2><small id="ticket-no">No. 001</small></div>
+
+      <div class="field">
+        <label for="dish">What are we making?</label>
+        <input type="text" id="dish" placeholder="Crispy pork carnitas tacos" maxlength="160">
+        <div class="ideas" id="dish-ideas">
+          <button type="button">Sourdough focaccia</button>
+          <button type="button">Thai green curry</button>
+          <button type="button">Gluten-free brownies</button>
+          <button type="button">Birria ramen</button>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="servings">Servings</label>
+          <select id="servings">
+            <option>1</option><option>2</option><option selected>4</option><option>6</option><option>8</option><option>12</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="time">Time budget</label>
+          <select id="time">
+            <option value="">Any</option>
+            <option value="under 20 minutes total">Under 20 min</option>
+            <option value="under 45 minutes total">Under 45 min</option>
+            <option value="about 1 to 2 hours">1–2 hours</option>
+            <option value="a slow weekend project, time is no object">Weekend project</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="skill">Cook's level</label>
+          <select id="skill">
+            <option value="beginner">Beginner</option>
+            <option value="confident home cook" selected>Home cook</option>
+            <option value="advanced, restaurant techniques welcome">Advanced</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="style">Style</label>
+          <select id="style">
+            <option value="">Classic</option>
+            <option value="authentic and traditional to its region">Traditional</option>
+            <option value="healthier and lighter">Lighter</option>
+            <option value="indulgent, comfort food">Indulgent</option>
+            <option value="creative modern twist">Modern twist</option>
+            <option value="budget-friendly">Budget</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="legend" id="diet-label">Dietary needs</span>
+        <div class="chips" id="diet" role="group" aria-labelledby="diet-label">
+          <button type="button" class="chip" aria-pressed="false">Vegetarian</button>
+          <button type="button" class="chip" aria-pressed="false">Vegan</button>
+          <button type="button" class="chip" aria-pressed="false">Gluten-free</button>
+          <button type="button" class="chip" aria-pressed="false">Dairy-free</button>
+          <button type="button" class="chip" aria-pressed="false">Nut-free</button>
+          <button type="button" class="chip" aria-pressed="false">Low-carb</button>
+          <button type="button" class="chip" aria-pressed="false">Halal</button>
+          <button type="button" class="chip" aria-pressed="false">High-protein</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="pantry">Use what I have (optional)</label>
+        <textarea id="pantry" placeholder="2 chicken thighs, half a bag of spinach, feta, no oven"></textarea>
+        <div class="photo" id="photo-row" hidden>
+          <label class="btn-ghost" for="photo">Add a fridge photo</label>
+          <input type="file" id="photo" accept="image/*" hidden>
+          <span id="photo-name"></span>
+        </div>
+      </div>
+
+      <div class="go">
+        <button class="btn" type="submit" id="make">Develop recipe</button>
+        <button class="btn-ghost" type="button" id="stop" hidden>Stop</button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <div class="saved">
+        <span class="legend">Recipe box</span>
+        <ul id="saved-list"></ul>
+        <p class="empty-note" id="saved-empty">Recipes you save appear here, in this browser.</p>
+      </div>
+    </form>
+
+    <article class="card" id="card" aria-live="polite"></article>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+
+  // ---------- Example shown on first load ----------
+  const EXAMPLE = {
+    title: "Weeknight Chicken Tikka Masala",
+    description: "Yogurt-marinated chicken charred under the broiler, then simmered in a buttery tomato and cream sauce built on browned onion, ginger and garam masala.",
+    cuisine: "North Indian / British", servings: 4, prep_min: 20, cook_min: 40, difficulty: "Medium",
+    equipment: ["Sheet pan", "Large heavy skillet or Dutch oven", "Blender or immersion blender"],
+    ingredient_groups: [
+      { name: "Chicken and marinade", items: [
+        { qty: 700, unit: "g", item: "boneless skinless chicken thighs", note: "cut into 4 cm pieces" },
+        { qty: 180, unit: "g", item: "plain whole-milk yogurt", note: "" },
+        { qty: 1, unit: "tbsp", item: "lemon juice", note: "" },
+        { qty: 2, unit: "tsp", item: "garam masala", note: "" },
+        { qty: 1, unit: "tsp", item: "Kashmiri chili powder", note: "or 1/2 tsp paprika + pinch cayenne" },
+        { qty: 1.5, unit: "tsp", item: "kosher salt", note: "Diamond Crystal; halve for table salt" }
+      ]},
+      { name: "Masala sauce", items: [
+        { qty: 3, unit: "tbsp", item: "ghee or unsalted butter", note: "" },
+        { qty: 1, unit: "whole", item: "large yellow onion", note: "finely diced" },
+        { qty: 1, unit: "tbsp", item: "grated ginger", note: "" },
+        { qty: 4, unit: "clove", item: "garlic", note: "grated" },
+        { qty: 2, unit: "tsp", item: "garam masala", note: "" },
+        { qty: 1, unit: "tsp", item: "ground cumin", note: "" },
+        { qty: 400, unit: "g", item: "crushed tomatoes", note: "1 can" },
+        { qty: 160, unit: "ml", item: "heavy cream", note: "" },
+        { qty: 1, unit: "tsp", item: "sugar", note: "only if tomatoes taste sharp" },
+        { qty: 1, unit: "tsp", item: "dried fenugreek leaves (kasuri methi)", note: "crushed between palms" }
+      ]}
+    ],
+    steps: [
+      { title: "Marinate", text: "Stir yogurt, lemon juice, garam masala, chili powder and salt together, then fold in the chicken. Rest at least 15 minutes at room temperature, or up to 24 hours refrigerated.", minutes: 15, temp_c: null },
+      { title: "Char the chicken", text: "Heat the broiler on high with a rack 10 cm below it. Spread the chicken on an oiled sheet pan in one layer. Broil until spotted black at the edges and the thickest piece reads [[T:74]] inside.", minutes: 10, temp_c: null },
+      { title: "Brown the onion", text: "Meanwhile melt the ghee in the skillet over medium heat. Cook the onion with a pinch of salt, stirring often, until deep golden. Don't rush this: it is most of the sauce's sweetness.", minutes: 12, temp_c: null },
+      { title: "Bloom the aromatics", text: "Add ginger and garlic and cook until fragrant, about 1 minute. Add garam masala and cumin and stir 30 seconds, until the spices darken slightly.", minutes: null, temp_c: null },
+      { title: "Simmer and blend", text: "Add tomatoes and 120 ml water. Simmer until thick and the oil starts to separate at the edges. Blend smooth for a restaurant-style sauce, or leave rustic.", minutes: 10, temp_c: null },
+      { title: "Finish", text: "Stir in cream, fenugreek and the chicken with its juices. Simmer gently 5 minutes. Taste: add salt first, then sugar only if it still tastes sharp.", minutes: 5, temp_c: null }
+    ],
+    tips: ["Thighs stay juicy under the broiler; breasts dry out in the sauce.", "The sauce tastes better the next day. Reheat gently and loosen with a splash of water."],
+    substitutions: [{ swap: "Heavy cream", with: "Full-fat coconut milk for dairy-free" }, { swap: "Broiler", with: "A ripping-hot cast-iron pan, in batches" }],
+    make_ahead: "Marinate the chicken and make the sauce up to 2 days ahead; combine and simmer to serve.",
+    nutrition: { calories: 520, protein_g: 40, carbs_g: 16, fat_g: 33 },
+    pairings: ["Basmati rice", "Garlic naan", "Quick cucumber raita"]
+  };
+
+  // ---------- State ----------
+  let state = {
+    recipe: EXAMPLE, isExample: true,
+    servings: EXAMPLE.servings,
+    units: store.get("tk-units", "us"),
+    checked: new Set()
+  };
+  let sample = null, canImages = false, ctl = null, photoFile = null;
+  const timers = new Map();
+
+  // ---------- Units ----------
+  const FR = [[0, ""], [0.125, "⅛"], [0.25, "¼"], [1 / 3, "⅓"], [0.5, "½"], [2 / 3, "⅔"], [0.75, "¾"], [1, ""]];
+  function frac(x) {
+    if (x >= 10) return String(Math.round(x));
+    let w = Math.floor(x), r = x - w, best = FR[0];
+    for (const f of FR) if (Math.abs(r - f[0]) < Math.abs(r - best[0])) best = f;
+    if (best[0] === 1) { w += 1; best = FR[0]; }
+    if (w === 0 && !best[1]) return "pinch";
+    return (w ? String(w) : "") + best[1];
+  }
+  const round = (x, step) => Math.max(step, Math.round(x / step) * step);
+  const trim = x => String(+x.toFixed(1));
+  function fmtQty(qty, unit) {
+    if (qty == null || qty === "") return "";
+    const u = String(unit || "").toLowerCase().trim();
+    const metric = state.units === "metric";
+    if (["g", "gram", "grams"].includes(u)) {
+      if (metric) return qty >= 1000 ? trim(qty / 1000) + " kg" : (qty >= 50 ? round(qty, 5) : trim(qty)) + " g";
+      const oz = qty / 28.35;
+      return oz >= 16 ? trim(oz / 16) + " lb" : frac(oz >= 4 ? Math.round(oz * 2) / 2 : oz) + " oz";
+    }
+    if (["kg"].includes(u)) return fmtQty(qty * 1000, "g");
+    if (["ml", "milliliter", "milliliters"].includes(u)) {
+      if (metric) return qty >= 1000 ? trim(qty / 1000) + " l" : (qty >= 50 ? round(qty, 5) : trim(qty)) + " ml";
+      if (qty < 15) return frac(qty / 4.93) + " tsp";
+      if (qty < 60) return frac(qty / 14.79) + " tbsp";
+      return frac(qty / 240) + " cup" + (qty / 240 > 1.1 ? "s" : "");
+    }
+    if (["l", "liter", "litre"].includes(u)) return fmtQty(qty * 1000, "ml");
+    if (["whole", "piece", "pieces", "each", ""].includes(u)) return frac(qty);
+    const plural = qty > 1.1 && !/s$/.test(u) && !["tsp", "tbsp"].includes(u) ? "s" : "";
+    return frac(qty) + " " + u + plural;
+  }
+  function temp(c) {
+    c = Number(c);
+    return state.units === "metric" ? Math.round(c) + "°C" : Math.round((c * 9 / 5 + 32) / 5) * 5 + "°F";
+  }
+
+  // ---------- Render ----------
+  const card = $("#card");
+  function stat(label, value) { const d = el("div", "stat"); d.append(el("b", null, value), el("span", null, label)); return d; }
+  function mins(m) { if (!m && m !== 0) return "—"; m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + "h" + (m % 60 ? " " + (m % 60) + "m" : "") : m + " min"; }
+
+  function stepText(p, text) {
+    const parts = String(text || "").split(/\[\[T:(-?\d+(?:\.\d+)?)\]\]/);
+    parts.forEach((part, i) => { if (i % 2) p.append(el("span", "temp", temp(part))); else p.append(part); });
+  }
+
+  function render() {
+    const r = state.recipe, mult = state.servings / (r.servings || 1);
+    card.replaceChildren();
+    const top = el("div", "card-top");
+    top.append(el("span", "flag", state.isExample ? "Example recipe" : (r.cuisine || "House recipe")));
+    top.append(el("h2", null, r.title || "Untitled"));
+    if (r.description) top.append(el("p", "desc", r.description));
+    const stats = el("div", "stats");
+    const sv = el("div", "stat");
+    const servCtl = el("div", "serv");
+    const minus = el("button", null, "−"); minus.type = "button"; minus.setAttribute("aria-label", "Fewer servings");
+    const plus = el("button", null, "+"); plus.type = "button"; plus.setAttribute("aria-label", "More servings");
+    minus.onclick = () => { if (state.servings > 1) { state.servings--; render(); } };
+    plus.onclick = () => { if (state.servings < 48) { state.servings++; render(); } };
+    servCtl.append(minus, el("b", null, String(state.servings)), plus);
+    sv.append(servCtl, el("span", null, "Servings"));
+    stats.append(sv, stat("Prep", mins(r.prep_min)), stat("Cook", mins(r.cook_min)), stat("Total", mins((r.prep_min || 0) + (r.cook_min || 0))), stat("Level", r.difficulty || "—"));
+    top.append(stats);
+    const act = el("div", "card-actions");
+    const saveB = el("button", "btn-ghost", isSaved(r) ? "Saved to recipe box" : "Save to recipe box"); saveB.type = "button";
+    saveB.onclick = () => { saveRecipe(r); saveB.textContent = "Saved to recipe box"; };
+    const copyB = el("button", "btn-ghost", "Copy as text"); copyB.type = "button";
+    copyB.onclick = () => copyText(copyB);
+    act.append(saveB, copyB);
+    top.append(act);
+    card.append(top);
+
+    const body = el("div", "card-body");
+    const ing = el("section", "ingredients");
+    ing.append(el("h3", "sec-title", "Ingredients" + (mult !== 1 ? ` · scaled ×${trim(mult)}` : "")));
+    (r.ingredient_groups || []).forEach((g, gi) => {
+      const grp = el("div", "group");
+      if (g.name) grp.append(el("h3", null, g.name));
+      const ul = el("ul");
+      (g.items || []).forEach((it, ii) => {
+        const key = gi + ":" + ii;
+        const li = el("li");
+        const lab = el("label", "ing" + (state.checked.has(key) ? " done" : ""));
+        const cb = el("input"); cb.type = "checkbox"; cb.id = "ing-" + gi + "-" + ii; cb.checked = state.checked.has(key);
+        cb.onchange = () => { cb.checked ? state.checked.add(key) : state.checked.delete(key); lab.classList.toggle("done", cb.checked); };
+        const q = el("span", "q", it.qty == null ? "" : fmtQty(Number(it.qty) * mult, it.unit));
+        const n = el("span", "n", it.qty == null && it.unit ? it.unit + " " + it.item : it.item);
+        if (it.note) { n.append(", "); n.append(el("small", null, it.note)); }
+        lab.append(cb, q, n); li.append(lab); ul.append(li);
+      });
+      grp.append(ul); ing.append(grp);
+    });
+    if (r.equipment?.length) { ing.append(el("h3", "sec-title", "Equipment")); ing.append(el("p", "equip", r.equipment.join(" · "))); }
+    body.append(ing);
+
+    const meth = el("section", "method");
+    meth.append(el("h3", "sec-title", "Method"));
+    if (mult !== 1) meth.append(el("p", "fine", "Quantities written inside the steps are for the original " + r.servings + " servings."));
+    const ol = el("ol", "steps");
+    (r.steps || []).forEach((s, i) => {
+      const li = el("li"); const d = el("div", "step");
+      if (s.title) d.append(el("h4", null, s.title));
+      const p = el("p"); stepText(p, s.text); d.append(p);
+      const meta = el("div", "meta");
+      if (s.temp_c != null && !/\[\[T:/.test(s.text || "")) meta.append(el("span", "temp", temp(s.temp_c)));
+      if (s.minutes) meta.append(timerButton(i, s.minutes));
+      if (meta.childNodes.length) d.append(meta);
+      li.append(d); ol.append(li);
+    });
+    meth.append(ol); body.append(meth);
+    card.append(body);
+
+    const notes = el("section", "notes");
+    if (r.tips?.length) { const d = el("div"); d.append(el("h3", "sec-title", "Chef's notes")); const ul = el("ul"); r.tips.forEach(t => ul.append(el("li", null, t))); d.append(ul); notes.append(d); }
+    if (r.substitutions?.length) { const d = el("div"); d.append(el("h3", "sec-title", "Swaps")); const ul = el("ul"); r.substitutions.forEach(s => { const li = el("li"); li.append(el("b", null, s.swap + ": ")); li.append(s.with); ul.append(li); }); d.append(ul); notes.append(d); }
+    if (r.make_ahead || r.pairings?.length) { const d = el("div"); if (r.make_ahead) { d.append(el("h3", "sec-title", "Make ahead")); d.append(el("p", null, r.make_ahead)); } if (r.pairings?.length) { const h = el("h3", "sec-title", "Serve with"); h.style.marginTop = "14px"; d.append(h); d.append(el("p", null, r.pairings.join(" · "))); } notes.append(d); }
+    if (r.nutrition) {
+      const d = el("div"); d.append(el("h3", "sec-title", "Per serving (estimate)"));
+      const g = el("div", "nutri"); const nu = r.nutrition;
+      [["kcal", nu.calories], ["protein", nu.protein_g, "g"], ["carbs", nu.carbs_g, "g"], ["fat", nu.fat_g, "g"]].forEach(([l, v, u]) => { const c = el("div"); c.append(el("b", null, v == null ? "—" : Math.round(v) + (u || "")), el("span", null, l)); g.append(c); });
+      d.append(g); d.append(el("p", "fine", "Rough AI estimate, not a nutrition label.")); notes.append(d);
+    }
+    if (notes.childNodes.length) card.append(notes);
+
+    const ref = el("section", "refine");
+    ref.append(el("h3", "sec-title", "Adjust this recipe"));
+    const f = el("form"); f.id = "refine-form";
+    const inp = el("input"); inp.id = "refine-input"; inp.type = "text"; inp.placeholder = "Make it spicier and use an air fryer"; inp.setAttribute("aria-label", "How should the recipe change?");
+    const b = el("button", "btn", "Revise"); b.type = "submit"; b.style.padding = "10px 16px"; b.style.fontSize = "1rem";
+    f.append(inp, b);
+    f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (v) refine(v); };
+    const ideas = el("div", "ideas");
+    ["Make it vegetarian", "Cut the time in half", "No special equipment", "Turn it into meal prep"].forEach(t => { const x = el("button", null, t); x.type = "button"; x.onclick = () => refine(t); ideas.append(x); });
+    ref.append(f, ideas);
+    if (!sample) ref.append(el("p", "fine", "Revising needs Claude, which isn't available in this view."));
+    card.append(ref);
+  }
+
+  // ---------- Timers ----------
+  let audioCtx = null;
+  function beep() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.35, 0.7].forEach(t => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(audioCtx.destination); o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.2); });
+    } catch {}
+  }
+  function timerButton(i, minutes) {
+    const b = el("button", "timer"); b.type = "button";
+    const t = timers.get(i);
+    const paint = () => {
+      const t = timers.get(i);
+      if (!t) { b.className = "timer"; b.textContent = "▶ " + minutes + " min timer"; return; }
+      const left = Math.max(0, Math.round((t.end - Date.now()) / 1000));
+      if (left === 0) { b.className = "timer rang"; b.textContent = "Time's up · reset"; return; }
+      b.className = "timer running"; b.textContent = "■ " + Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+    };
+    b.onclick = () => {
+      const t = timers.get(i);
+      if (t) { clearInterval(t.iv); timers.delete(i); paint(); return; }
+      try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+      const nt = { end: Date.now() + minutes * 60000, rang: false };
+      nt.iv = setInterval(() => { if (!b.isConnected) { return; } paint(); if (Date.now() >= nt.end && !nt.rang) { nt.rang = true; clearInterval(nt.iv); beep(); } }, 500);
+      timers.set(i, nt); paint();
+    };
+    paint();
+    return b;
+  }
+  function clearTimers() { timers.forEach(t => clearInterval(t.iv)); timers.clear(); }
+
+  // ---------- Copy ----------
+  function asText() {
+    const r = state.recipe, mult = state.servings / (r.servings || 1);
+    const lines = [r.title, r.description || "", "", `Serves ${state.servings} · Prep ${mins(r.prep_min)} · Cook ${mins(r.cook_min)}`, ""];
+    (r.ingredient_groups || []).forEach(g => { if (g.name) lines.push(g.name.toUpperCase()); (g.items || []).forEach(it => lines.push("- " + [it.qty == null ? "" : fmtQty(it.qty * mult, it.unit), it.item].filter(Boolean).join(" ") + (it.note ? ", " + it.note : ""))); lines.push(""); });
+    lines.push("METHOD");
+    (r.steps || []).forEach((s, i) => lines.push(`${i + 1}. ${s.title ? s.title + ": " : ""}${String(s.text).replace(/\[\[T:(-?\d+(?:\.\d+)?)\]\]/g, (_, c) => temp(c))}`));
+    if (r.tips?.length) { lines.push("", "NOTES"); r.tips.forEach(t => lines.push("- " + t)); }
+    return lines.join("\n");
+  }
+  function copyText(btn) {
+    const txt = asText();
+    const done = () => { btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy as text", 1600); };
+    try {
+      navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, btn));
+    } catch { fallbackCopy(txt, btn); }
+  }
+  function fallbackCopy(txt, btn) {
+    const ta = el("textarea"); ta.value = txt; ta.style.width = "100%"; ta.style.minHeight = "200px"; ta.id = "copy-fallback";
+    btn.closest(".card-top").append(ta); ta.select(); btn.textContent = "Select all and copy below";
+  }
+
+  // ---------- Recipe box (this browser only) ----------
+  const keyOf = r => (r.title || "") + "|" + (r.servings || "");
+  const getSaved = () => store.get("tk-saved", []);
+  const isSaved = r => !state.isExample && getSaved().some(x => keyOf(x) === keyOf(r));
+  function saveRecipe(r) {
+    const list = getSaved().filter(x => keyOf(x) !== keyOf(r));
+    list.unshift(r); store.set("tk-saved", list.slice(0, 40)); renderSaved();
+  }
+  function renderSaved() {
+    const list = getSaved(), ul = $("#saved-list");
+    ul.replaceChildren();
+    $("#saved-empty").hidden = list.length > 0;
+    list.forEach((r, i) => {
+      const li = el("li");
+      const o = el("button", "open", r.title); o.type = "button";
+      o.onclick = () => show(r, false);
+      const d = el("button", "del", "×"); d.type = "button"; d.setAttribute("aria-label", "Remove " + r.title);
+      d.onclick = () => { const l = getSaved(); l.splice(i, 1); store.set("tk-saved", l); renderSaved(); };
+      li.append(o, d); ul.append(li);
+    });
+  }
+
+  function show(r, isExample) {
+    clearTimers();
+    state.recipe = r; state.isExample = !!isExample; state.servings = r.servings || 4; state.checked = new Set();
+    render();
+    if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ---------- Claude ----------
+  const SCHEMA = `Reply with ONLY one JSON object, no prose, in exactly this shape:
+{"title": string, "description": string (1-2 sentences, appetizing and specific), "cuisine": string, "servings": number, "prep_min": number, "cook_min": number, "difficulty": "Easy"|"Medium"|"Hard",
+ "equipment": [string],
+ "ingredient_groups": [{"name": string, "items": [{"qty": number|null, "unit": string, "item": string, "note": string}]}],
+ "steps": [{"title": string (2-4 words), "text": string, "minutes": number|null, "temp_c": number|null}],
+ "tips": [string], "substitutions": [{"swap": string, "with": string}], "make_ahead": string, "nutrition": {"calories": number, "protein_g": number, "carbs_g": number, "fat_g": number}, "pairings": [string]}
+Unit rules: weigh solids, meat, flour, sugar, butter, cheese and produce in "g"; liquids over 2 tbsp in "ml"; small amounts in "tsp" or "tbsp"; countable things use "whole" or a natural unit like "clove", "sprig", "egg" (singular). qty is per the stated servings, as a plain number (0.5 not "1/2"); use null for "to taste" and put "to taste" in note. Never put units inside "item".
+Temperatures inside step text: always write them as [[T:<celsius>]] (e.g. "roast at [[T:220]]", "until it reads [[T:63]]"), never as plain numbers with °C or °F. "minutes" is the active wait for that step (simmer, rest, bake), else null.`;
+
+  const CRAFT = `You are a senior recipe developer at a test kitchen. Write a recipe that works the first time:
+- Use proven ratios and real technique for the dish (correct salt by weight, hydration for doughs, fat-to-acid balance, proper resting).
+- Every cooking step gives a sensory doneness cue (color, texture, sound, internal temperature) as well as a time range.
+- Order steps for efficient workflow (start long tasks first, prep during waits).
+- Keep it authentic to the dish's tradition unless a style is requested, and name the specific variety of key ingredients.
+- Respect every dietary restriction strictly, including hidden sources (fish sauce, gelatin, worcestershire, stock, wheat in soy sauce).`;
+
+  function briefText() {
+    const diets = [...document.querySelectorAll("#diet .chip[aria-pressed='true']")].map(b => b.textContent);
+    const lines = [
+      "Dish: " + ($("#dish").value.trim() || "a surprise dish built from my pantry"),
+      "Servings: " + $("#servings").value,
+      "Cook's level: " + $("#skill").value
+    ];
+    if ($("#time").value) lines.push("Time budget: " + $("#time").value);
+    if ($("#style").value) lines.push("Style: " + $("#style").value);
+    if (diets.length) lines.push("Dietary requirements (strict): " + diets.join(", "));
+    if ($("#pantry").value.trim()) lines.push("Ingredients/equipment on hand, use them and avoid needing much more: " + $("#pantry").value.trim());
+    if (photoFile) lines.push("The attached photo shows ingredients I have. Identify what's usable and build around it.");
+    return lines.join("\n");
+  }
+
+  function validRecipe(r) {
+    return r && typeof r === "object" && typeof r.title === "string" && Array.isArray(r.ingredient_groups) && Array.isArray(r.steps) && r.steps.length;
+  }
+
+  const MSG = {
+    not_granted: "Claude isn't allowed for this page. Allow it from the page's Permissions menu to develop recipes.",
+    sampling_disabled: "Claude isn't available on this account.",
+    rate_limited: "You've hit a usage limit. Wait a bit, then try again.",
+    session_expired: "Your session expired. Sign in again, then retry.",
+    refused: "Claude wouldn't make that one. Try describing the dish differently.",
+    invalid_json: "The recipe came back garbled. Press the button again.",
+    image_rejected: "That photo couldn't be read. Try a JPEG or PNG under 20 MB.",
+    prompt_too_large: "That's too much text. Shorten the pantry list."
+  };
+
+  const PHASES = ["Reading your order", "Checking ratios", "Writing the method", "Plating"];
+  let phaseTimer = null;
+  function cooking(label) {
+    card.replaceChildren();
+    const c = el("div", "cooking");
+    c.append(el("span", "flag", "In the kitchen"), el("h2", null, label));
+    const pan = el("div", "pan"); pan.append(el("i")); c.append(pan);
+    const p = el("p", null, PHASES[0] + "…"); c.append(p);
+    card.append(c);
+    let i = 0; clearInterval(phaseTimer);
+    phaseTimer = setInterval(() => { i = Math.min(i + 1, PHASES.length - 1); p.textContent = PHASES[i] + "…"; }, 9000);
+  }
+
+  function busy(on) {
+    $("#make").disabled = on; $("#stop").hidden = !on;
+    document.querySelectorAll(".refine button").forEach(b => b.disabled = on);
+    if (!on) clearInterval(phaseTimer);
+  }
+
+  async function ask(prompt, label, withPhoto) {
+    if (!sample) { setStatus("Claude isn't available in this view. Open the page on claude.ai to develop recipes.", true); return; }
+    const prev = { recipe: state.recipe, isExample: state.isExample, servings: state.servings };
+    ctl = new AbortController();
+    busy(true); setStatus(""); cooking(label);
+    try {
+      const opts = { signal: ctl.signal, modelTier: "default", cache: false };
+      if (withPhoto && photoFile && canImages) opts.images = [photoFile];
+      const r = await sample.json(prompt, opts);
+      if (!validRecipe(r)) throw { code: "invalid_json" };
+      bumpTicket();
+      show(r, false);
+      setStatus("Ready. Tap a timer when you start a step.");
+    } catch (e) {
+      state.recipe = prev.recipe; state.isExample = prev.isExample; state.servings = prev.servings; render();
+      if (e?.code !== "cancelled") setStatus(MSG[e?.code] || "Something went wrong reaching Claude. Try again.", true);
+      else setStatus("Stopped.");
+    } finally { busy(false); }
+  }
+
+  function develop() {
+    if (!$("#dish").value.trim() && !$("#pantry").value.trim() && !photoFile) { setStatus("Name a dish, or list what you have.", true); $("#dish").focus(); return; }
+    const prompt = CRAFT + "\n\nThe order:\n" + briefText() + "\n\n" + SCHEMA;
+    ask(prompt, $("#dish").value.trim() || "Something from your pantry", true);
+  }
+
+  function refine(change) {
+    const r = state.recipe;
+    const prompt = CRAFT + "\n\nHere is the current recipe as JSON:\n" + JSON.stringify(r) +
+      "\n\nRevise it with this change: " + change + "\nKeep everything that the change doesn't affect. Re-check quantities, times and doneness cues so the revised recipe still works.\n\n" + SCHEMA;
+    ask(prompt, "Revising: " + change, false);
+  }
+
+  function setStatus(t, err) { const s = $("#status"); s.textContent = t; s.classList.toggle("err", !!err); }
+  function bumpTicket() { const n = store.get("tk-ticket", 1) + 1; store.set("tk-ticket", n); paintTicket(); }
+  function paintTicket() { $("#ticket-no").textContent = "No. " + String(store.get("tk-ticket", 1)).padStart(3, "0"); }
+
+  // ---------- Wiring ----------
+  document.querySelectorAll(".units button").forEach(b => b.onclick = () => {
+    state.units = b.dataset.u; store.set("tk-units", state.units);
+    document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    render();
+  });
+  document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
+  document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
+  document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; $("#dish").focus(); });
+  $("#brief").onsubmit = e => { e.preventDefault(); develop(); };
+  $("#stop").onclick = () => ctl?.abort();
+  $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
+
+  paintTicket(); renderSaved(); render();
+
+  (async () => {
+    try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+    if (!sample) { setStatus("Claude isn't available in this view. Open the page on claude.ai to develop recipes.", true); render(); return; }
+    try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
+    $("#photo-row").hidden = !canImages;
+    render();
+  })();
+})();
+</script>
+
+</body>
+</html>
