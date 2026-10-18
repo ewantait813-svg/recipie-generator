@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-18T17:29:48+00:00",
+ "updated": "2026-10-18T17:35:15.885Z",
  "from": "2026-10-04",
  "to": "2026-10-17",
  "source": "English Wikipedia page views",
@@ -255,6 +255,16 @@
    "change": 47
   },
   {
+   "dish": "Doughnut",
+   "wiki": "Doughnut",
+   "id": "53393",
+   "recipe": "Dutch doughnuts",
+   "thumb": "https://www.themealdb.com/images/media/meals/cz1d6v1777627421.jpg",
+   "views7": 5587,
+   "prev7": 3593,
+   "change": 55
+  },
+  {
    "dish": "Cheesecake",
    "wiki": "Cheesecake",
    "id": "52858",
@@ -285,6 +295,26 @@
    "change": 36
   },
   {
+   "dish": "Moussaka",
+   "wiki": "Moussaka",
+   "id": "53006",
+   "recipe": "Moussaka",
+   "thumb": "https://www.themealdb.com/images/media/meals/ctg8jd1585563097.jpg",
+   "views7": 5088,
+   "prev7": 3925,
+   "change": 30
+  },
+  {
+   "dish": "Risotto",
+   "wiki": "Risotto",
+   "id": "52823",
+   "recipe": "Salmon Prawn Risotto",
+   "thumb": "https://www.themealdb.com/images/media/meals/xxrxux1503070723.jpg",
+   "views7": 4969,
+   "prev7": 3487,
+   "change": 43
+  },
+  {
    "dish": "Empanada",
    "wiki": "Empanada",
    "id": "53134",
@@ -313,6 +343,16 @@
    "views7": 4586,
    "prev7": 3146,
    "change": 46
+  },
+  {
+   "dish": "Cinnamon roll",
+   "wiki": "Cinnamon roll",
+   "id": "53116",
+   "recipe": "Cinnamon buns",
+   "thumb": "https://www.themealdb.com/images/media/meals/as88dq1762772486.jpg",
+   "views7": 4478,
+   "prev7": 4435,
+   "change": 1
   },
   {
    "dish": "Taco",
@@ -395,6 +435,26 @@
    "change": 32
   },
   {
+   "dish": "Carrot cake",
+   "wiki": "Carrot cake",
+   "id": "52897",
+   "recipe": "Carrot Cake",
+   "thumb": "https://www.themealdb.com/images/media/meals/vrspxv1511722107.jpg",
+   "views7": 3688,
+   "prev7": 1335,
+   "change": 176
+  },
+  {
+   "dish": "Toad in the hole",
+   "wiki": "Toad in the hole",
+   "id": "52822",
+   "recipe": "Toad In The Hole",
+   "thumb": "https://www.themealdb.com/images/media/meals/ytuvwr1503070420.jpg",
+   "views7": 3610,
+   "prev7": 2544,
+   "change": 42
+  },
+  {
    "dish": "Crème brûlée",
    "wiki": "Crème brûlée",
    "id": "52917",
@@ -453,6 +513,16 @@
    "views7": 2912,
    "prev7": 2219,
    "change": 31
+  },
+  {
+   "dish": "Pumpkin pie",
+   "wiki": "Pumpkin pie",
+   "id": "52857",
+   "recipe": "Pumpkin Pie",
+   "thumb": "https://www.themealdb.com/images/media/meals/usuqtp1511385394.jpg",
+   "views7": 2708,
+   "prev7": 1536,
+   "change": 76
   },
   {
    "dish": "Rogan josh",
