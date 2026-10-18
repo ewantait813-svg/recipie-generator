@@ -8,6 +8,8 @@
 <meta http-equiv="refresh" content="0; url=/recipie-generator/">
 <script>
   // Any mistyped address under the site goes to the home page, keeping a shared recipe (#recipe=...) if there is one.
+  // Log the mistyped address to GoatCounter as an event (not a page view), then redirect.
+  try { fetch("https://ewannnnnn.goatcounter.com/count?e=true&p=" + encodeURIComponent("Typed: " + location.pathname) + "&t=" + encodeURIComponent("Wrong address, redirected") + "&r=" + encodeURIComponent(document.referrer) + "&rnd=" + Math.random(), { mode: "no-cors", keepalive: true, credentials: "omit" }); } catch (e) {}
   location.replace("/recipie-generator/" + location.search + location.hash);
 </script>
 <style>
