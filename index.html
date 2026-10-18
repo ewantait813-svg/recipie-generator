@@ -112,6 +112,17 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .flag { justify-self: start; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; background: var(--saffron-soft); color: var(--ink); padding: 3px 8px; border-radius: 3px; }
 .card-top h2 { font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 800; letter-spacing: -0.02em; }
 .card-top .desc { margin: 0; max-width: 62ch; font-size: 1.05rem; }
+.hero { width: 100%; max-height: 300px; object-fit: cover; border-radius: 4px; display: block; background: var(--basil-soft); }
+
+/* Web search results */
+.results { padding: 24px 28px 28px; display: grid; gap: 16px; }
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.result { display: grid; gap: 8px; border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 0 0 12px; cursor: pointer; text-align: left; overflow: hidden; font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.25; }
+.result img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--basil-soft); }
+.result span { padding: 0 12px; }
+.result small { display: block; padding: 0 12px; font-family: var(--mono); font-weight: 400; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.result:hover, .result:focus-visible { border-color: var(--basil); }
+.sources a { color: var(--basil); font-weight: 600; }
 .stats { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 4px; margin-top: 6px; }
 .stat { padding: 10px 16px; display: grid; gap: 2px; border-right: 1px solid var(--line); min-width: 0; }
 .stat:last-child { border-right: 0; }
@@ -257,6 +268,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
   .card-top, .ingredients, .method, .notes { padding: 12px 0; }
   .ingredients { border-right: 0; }
   .ing { grid-template-columns: minmax(70px, auto) 1fr; }
+  .hero { max-height: 180px; }
   .card-body { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 24px; }
   ol.steps li, .group, .meal, .notes > div { break-inside: avoid; }
   .ing.done .n, .ing.done .q { text-decoration: none; opacity: 1; }
@@ -267,7 +279,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
   <header class="top">
     <div class="brand">
       <h1>Test <span>Kitchen</span></h1>
-      <p>Describe any dish and Claude develops a full recipe with tested ratios, doneness cues and timings. Or tell it your sport and get a fueling plan built around your training.</p>
+      <p>Search for any dish and get a real recipe from the web, with step timers, unit conversion and a recipe box. Or tell it your sport and get a fueling plan built around your training.</p>
     </div>
     <div class="tools">
       <div class="units" role="group" aria-label="Measurement units">
@@ -426,7 +438,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
         </div>
       </div>
 
-      <div class="row2">
+      <div class="row2 claude-only">
         <div class="field">
           <label for="servings">Servings</label>
           <select id="servings">
@@ -445,7 +457,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
         </div>
       </div>
 
-      <div class="row2">
+      <div class="row2 claude-only">
         <div class="field">
           <label for="skill">Cook's level</label>
           <select id="skill">
@@ -493,13 +505,13 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       </div>
 
       <div class="notice" id="offline-note" hidden>
-        <b>Viewing the demo</b>
-        Making new recipes and plans needs Claude, which only runs inside claude.ai. You can still browse the example, scale servings, switch units and run timers.
+        <b>Recipes come from the web</b>
+        Recipe search works anywhere. Athlete diet plans and "Adjust this recipe" need Claude, which only runs inside claude.ai.
         <a href="https://claude.ai/artifact/ES56QVvN9pjXCN2agBTytx" target="_blank" rel="noopener">Open Test Kitchen in Claude →</a>
       </div>
 
       <div class="go">
-        <button class="btn" type="submit" id="make">Develop recipe</button>
+        <button class="btn" type="submit" id="make">Find recipes</button>
         <button class="btn-ghost" type="button" id="stop" hidden>Stop</button>
       </div>
       <div class="status" id="status" role="status" aria-live="polite"></div>
@@ -774,6 +786,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     const top = el("div", "card-top");
     top.append(el("span", "flag", state.isExample ? "Example recipe" : (r.cuisine || "House recipe")));
     top.append(el("h2", null, r.title || "Untitled"));
+    if (r.image) { const img = el("img", "hero"); img.src = r.image; img.alt = r.title || ""; img.loading = "lazy"; img.onerror = () => img.remove(); top.prepend(img); }
     if (r.description) top.append(el("p", "desc", r.description));
     const stats = el("div", "stats");
     const sv = el("div", "stat");
@@ -784,7 +797,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     plus.onclick = () => { if (state.servings < 48) { state.servings++; render(); } };
     servCtl.append(minus, el("b", null, String(state.servings)), plus);
     sv.append(servCtl, el("span", null, "Servings"));
-    stats.append(sv, stat("Prep", mins(r.prep_min)), stat("Cook", mins(r.cook_min)), stat("Total", mins((r.prep_min || 0) + (r.cook_min || 0))), stat("Level", r.difficulty || "—"));
+    stats.append(sv, stat("Prep", mins(r.prep_min)), stat("Cook", mins(r.cook_min)), stat("Total", r.prep_min == null && r.cook_min == null ? "—" : mins((r.prep_min || 0) + (r.cook_min || 0))), stat("Level", r.difficulty || "—"));
     top.append(stats);
     const act = el("div", "card-actions");
     const saveB = el("button", "btn-ghost", isSaved(r) ? "Saved to recipe box" : "Save to recipe box"); saveB.type = "button";
@@ -808,7 +821,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
         const lab = el("label", "ing" + (state.checked.has(key) ? " done" : ""));
         const cb = el("input"); cb.type = "checkbox"; cb.id = "ing-" + gi + "-" + ii; cb.checked = state.checked.has(key);
         cb.onchange = () => { cb.checked ? state.checked.add(key) : state.checked.delete(key); lab.classList.toggle("done", cb.checked); };
-        const q = el("span", "q", it.qty == null ? "" : fmtQty(Number(it.qty) * mult, it.unit));
+        const q = el("span", "q", it.qty == null ? (it.raw || "") : fmtQty(Number(it.qty) * mult, it.unit));
         const n = el("span", "n", it.qty == null && it.unit ? it.unit + " " + it.item : it.item);
         if (it.note) { n.append(", "); n.append(el("small", null, it.note)); }
         lab.append(cb, q, n); li.append(lab); ul.append(li);
@@ -844,6 +857,15 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       const g = el("div", "nutri"); const nu = r.nutrition;
       [["kcal", nu.calories], ["protein", nu.protein_g, "g"], ["carbs", nu.carbs_g, "g"], ["fat", nu.fat_g, "g"]].forEach(([l, v, u]) => { const c = el("div"); c.append(el("b", null, v == null ? "—" : Math.round(v) + (u || "")), el("span", null, l)); g.append(c); });
       d.append(g); d.append(el("p", "fine", "Rough AI estimate, not a nutrition label.")); notes.append(d);
+    }
+    if (r.source_url || r.video_url || r.web) {
+      const d = el("div", "sources"); d.append(el("h3", "sec-title", "Where it's from"));
+      const ul = el("ul");
+      const link = (href, text) => { const li = el("li"); const a = el("a", null, text); a.href = href; a.target = "_blank"; a.rel = "noopener"; li.append(a); ul.append(li); };
+      if (r.source_url) link(r.source_url, "Original recipe" + (hostOf(r.source_url) ? " · " + hostOf(r.source_url) : ""));
+      if (r.video_url) link(r.video_url, "Watch the video");
+      if (r.web) link("https://www.themealdb.com/meal/" + r.web, "Found on TheMealDB");
+      d.append(ul); notes.append(d);
     }
     if (notes.childNodes.length) card.append(notes);
 
@@ -897,7 +919,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
   function asText() {
     const r = state.recipe, mult = state.servings / (r.servings || 1);
     const lines = [r.title, r.description || "", "", `Serves ${state.servings} · Prep ${mins(r.prep_min)} · Cook ${mins(r.cook_min)}`, ""];
-    (r.ingredient_groups || []).forEach(g => { if (g.name) lines.push(g.name.toUpperCase()); (g.items || []).forEach(it => lines.push("- " + [it.qty == null ? "" : fmtQty(it.qty * mult, it.unit), it.item].filter(Boolean).join(" ") + (it.note ? ", " + it.note : ""))); lines.push(""); });
+    (r.ingredient_groups || []).forEach(g => { if (g.name) lines.push(g.name.toUpperCase()); (g.items || []).forEach(it => lines.push("- " + [it.qty == null ? (it.raw || "") : fmtQty(it.qty * mult, it.unit), it.item].filter(Boolean).join(" ") + (it.note ? ", " + it.note : ""))); lines.push(""); });
     lines.push("METHOD");
     (r.steps || []).forEach((s, i) => lines.push(`${i + 1}. ${s.title ? s.title + ": " : ""}${String(s.text).replace(/\[\[T:(-?\d+(?:\.\d+)?)\]\]/g, (_, c) => temp(c))}`));
     if (r.tips?.length) { lines.push("", "NOTES"); r.tips.forEach(t => lines.push("- " + t)); }
@@ -1029,15 +1051,15 @@ Temperatures inside step text: always write them as [[T:<celsius>]] (e.g. "roast
 
   const PHASES = ["Reading your order", "Checking ratios", "Writing the method", "Plating"];
   let phaseTimer = null;
-  function cooking(label) {
+  function cooking(label, phases = PHASES) {
     card.replaceChildren();
     const c = el("div", "cooking");
     c.append(el("span", "flag", "In the kitchen"), el("h2", null, label));
     const pan = el("div", "pan"); pan.append(el("i")); c.append(pan);
-    const p = el("p", null, PHASES[0] + "…"); c.append(p);
+    const p = el("p", null, phases[0] + "…"); c.append(p);
     card.append(c);
     let i = 0; clearInterval(phaseTimer);
-    phaseTimer = setInterval(() => { i = Math.min(i + 1, PHASES.length - 1); p.textContent = PHASES[i] + "…"; }, 9000);
+    phaseTimer = setInterval(() => { i = Math.min(i + 1, phases.length - 1); p.textContent = phases[i] + "…"; }, phases === PHASES ? 9000 : 1500);
   }
 
   function busy(on) {
@@ -1114,6 +1136,121 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       if (e?.code !== "cancelled") setStatus(MSG[e?.code] || "Something went wrong reaching Claude. Try again.", true);
       else setStatus("Stopped.");
     } finally { busy(false); }
+  }
+
+  // ---------- Web recipes (TheMealDB, free and keyless) ----------
+  const MEALDB = "https://www.themealdb.com/api/json/v1/1/";
+  const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+  async function mealdb(path, signal) {
+    const res = await fetch(MEALDB + path, { signal });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return (await res.json())?.meals || [];
+  }
+
+  const UNIT = { g: ["g", 1], gram: ["g", 1], grams: ["g", 1], kg: ["g", 1000], ml: ["ml", 1], l: ["ml", 1000], litre: ["ml", 1000], liter: ["ml", 1000],
+    cup: ["ml", 240], cups: ["ml", 240], oz: ["g", 28.35], lb: ["g", 453.6], lbs: ["g", 453.6], pound: ["g", 453.6], pounds: ["g", 453.6],
+    tsp: ["tsp", 1], teaspoon: ["tsp", 1], teaspoons: ["tsp", 1], tbsp: ["tbsp", 1], tbs: ["tbsp", 1], tblsp: ["tbsp", 1], tablespoon: ["tbsp", 1], tablespoons: ["tbsp", 1] };
+  function parseMeasure(m) {
+    m = String(m || "").trim();
+    const x = m.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.?\d+)\s*([a-zA-Z]+)?\.?\s*(.*)$/);
+    if (!x) return { qty: null, unit: "", raw: m };
+    const n = x[1].split(/\s+/).reduce((t, p) => t + (p.includes("/") ? p.split("/")[0] / p.split("/")[1] : Number(p)), 0);
+    const u = (x[2] || "").toLowerCase();
+    if (!u) return x[3] ? { qty: null, unit: "", raw: m } : { qty: n, unit: "whole", note: "" };
+    if (UNIT[u]) return { qty: n * UNIT[u][1], unit: UNIT[u][0], note: x[3] };
+    return { qty: n, unit: u, note: x[3] };
+  }
+  function fromMeal(m) {
+    const items = [];
+    for (let i = 1; i <= 20; i++) {
+      const name = (m["strIngredient" + i] || "").trim();
+      if (!name) continue;
+      const pm = parseMeasure(m["strMeasure" + i]);
+      items.push({ qty: pm.qty, unit: pm.unit, raw: pm.raw || "", item: name, note: pm.note || "" });
+    }
+    let paras = String(m.strInstructions || "").split(/\r?\n+/).map(t => t.trim())
+      .filter(t => t && !/^(step\s*)?\d+[.):]?$/i.test(t)).map(t => t.replace(/^(step\s*\d+[.):]?|\d+[.)])\s*/i, ""));
+    if (paras.length === 1) {
+      const sent = paras[0].match(/[^.!?]+[.!?]+(\s|$)/g) || paras;
+      paras = []; for (let i = 0; i < sent.length; i += 2) paras.push(sent.slice(i, i + 2).join("").trim());
+    }
+    const steps = paras.map(t => { const mm = t.match(/(\d+)(?:\s*(?:-|to|–)\s*\d+)?\s*min/i); return { title: "", text: t, minutes: mm ? Math.min(Number(mm[1]), 240) : null, temp_c: null }; });
+    const tags = String(m.strTags || "").split(",").map(t => t.trim()).filter(Boolean);
+    return {
+      title: m.strMeal, cuisine: [m.strArea, m.strCategory].filter(x => x && x !== "Unknown").join(" · ") || "From the web",
+      description: tags.length ? "Tagged: " + tags.join(", ") + "." : "",
+      servings: 4, prep_min: null, cook_min: null, difficulty: null, equipment: [],
+      ingredient_groups: [{ name: "", items }], steps, tips: ["Servings are an estimate: recipes from the web don't always say how many they serve."],
+      image: m.strMealThumb || "", source_url: m.strSource || "", video_url: m.strYoutube || "", web: m.idMeal
+    };
+  }
+
+  async function findRecipes() {
+    const dish = $("#dish").value.trim(), pantry = $("#pantry").value.trim();
+    const diets = [...document.querySelectorAll("#diet .chip[aria-pressed='true']")].map(b => b.textContent);
+    if (!dish && !pantry) { setStatus("Name a dish, or list what you have.", true); $("#dish").focus(); return; }
+    const ac = ctl = new AbortController(), sig = ac.signal, get = path => mealdb(path, sig);
+    let handedOff = false;
+    busy(true); setStatus(""); cooking("Searching for " + (dish || "recipes with " + pantry.split(/[,\n]/)[0].trim()), ["Searching the recipe library", "Checking matches"]);
+    try {
+      let meals = [];
+      if (dish) {
+        meals = await get("search.php?s=" + encodeURIComponent(dish));
+        if (!meals.length) {
+          const words = dish.toLowerCase().split(/\W+/).filter(w => w.length > 3).sort((a, b) => b.length - a.length);
+          for (const w of words) { meals = await get("search.php?s=" + encodeURIComponent(w)); if (!meals.length) meals = await get("filter.php?i=" + encodeURIComponent(w)); if (meals.length) break; }
+        }
+      } else {
+        const first = pantry.split(/[,\n]/)[0].replace(/[\d½¼¾⅓.]+\s*(g|kg|ml|cups?|tbsp|tsp|oz|lbs?)?\b/gi, "").replace(/\b(a|an|some|half|bag|of|the)\b/gi, "").trim();
+        meals = await get("filter.php?i=" + encodeURIComponent(first.replace(/\s+/g, "_")));
+      }
+      const veg = diets.includes("Vegan") ? "Vegan" : diets.includes("Vegetarian") ? "Vegetarian" : "";
+      if (veg && meals.length) { const ok = new Set((await get("filter.php?c=" + veg)).map(m => m.idMeal)); meals = meals.filter(m => ok.has(m.idMeal)); }
+      const other = diets.filter(d => d !== "Vegan" && d !== "Vegetarian");
+      showResults(dish || pantry, meals.slice(0, 24), other);
+      setStatus(meals.length ? `Found ${meals.length > 24 ? "24+" : meals.length} recipe${meals.length === 1 ? "" : "s"}. Pick one to open it.` : "");
+    } catch (e) {
+      render();
+      if (sig.aborted) { setStatus("Stopped."); return; }
+      if (sample) { busy(false); handedOff = true; develop(); setStatus("Couldn't reach the recipe library here, so Claude is developing one instead."); return; }
+      setStatus("Couldn't reach the recipe library. Check your connection and try again.", true);
+    } finally { if (!handedOff) busy(false); }
+  }
+
+  function showResults(query, meals, otherDiets) {
+    clearTimers(); card.replaceChildren();
+    const top = el("div", "card-top");
+    top.append(el("span", "flag", "From the web"), el("h2", null, meals.length ? "Recipes for “" + query + "”" : "Nothing found for “" + query + "”"));
+    if (otherDiets.length) top.append(el("p", "desc", otherDiets.join(", ") + " can't be filtered automatically for web recipes. Check the ingredients before you cook."));
+    card.append(top);
+    const sec = el("section", "results");
+    if (!meals.length) sec.append(el("p", null, "Try a simpler name (\"curry\" instead of \"weeknight Thai green curry\"), or one main ingredient like \"salmon\"."));
+    const grid = el("div", "results-grid");
+    meals.forEach(m => {
+      const b = el("button", "result"); b.type = "button";
+      const img = el("img"); img.src = (m.strMealThumb || "") + (m.strMealThumb ? "/preview" : ""); img.alt = ""; img.loading = "lazy";
+      b.append(img, el("span", null, m.strMeal));
+      if (m.strArea || m.strCategory) b.append(el("small", null, [m.strArea, m.strCategory].filter(x => x && x !== "Unknown").join(" · ")));
+      b.onclick = () => openMeal(m);
+      grid.append(b);
+    });
+    if (meals.length) sec.append(grid);
+    const more = el("div", "card-actions");
+    const rnd = el("button", "btn-ghost", "Surprise me"); rnd.type = "button";
+    rnd.onclick = async () => { try { const [m] = await mealdb("random.php"); if (m) openMeal(m); } catch { setStatus("Couldn't reach the recipe library.", true); } };
+    more.append(rnd);
+    if (sample) { const c = el("button", "btn-ghost", "Have Claude develop it instead"); c.type = "button"; c.onclick = () => develop(); more.append(c); }
+    sec.append(more);
+    card.append(sec);
+    if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function openMeal(m) {
+    try {
+      if (!m.strInstructions) { const [full] = await mealdb("lookup.php?i=" + m.idMeal); if (!full) throw new Error("missing"); m = full; }
+      bumpTicket(); show(fromMeal(m), false);
+      setStatus("Ready. Tap a timer when you start a step.");
+    } catch { setStatus("Couldn't open that recipe. Try another one.", true); }
   }
 
   function develop() {
@@ -1214,7 +1351,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     $("#plan-fields").hidden = m !== "plan";
     $("#recipe-fields").hidden = m !== "recipe";
     $("#pantry-field").hidden = m !== "recipe";
-    $("#make").textContent = m === "plan" ? "Build my diet plan" : "Develop recipe";
+    $("#make").textContent = m === "plan" ? "Build my diet plan" : "Find recipes";
     if (state.view !== m) { state.view = m; render(); }
     store.set("tk-mode", m);
   }
@@ -1224,7 +1361,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
   document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
   document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; $("#dish").focus(); });
-  $("#brief").onsubmit = e => { e.preventDefault(); mode === "plan" ? buildPlan() : develop(); };
+  $("#brief").onsubmit = e => { e.preventDefault(); mode === "plan" ? buildPlan() : findRecipes(); };
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
@@ -1234,7 +1371,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
-    if (!sample) { $("#offline-note").hidden = false; render(); return; }
+    if (!sample) { $("#offline-note").hidden = false; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
     $("#photo-row").hidden = !canImages;
     render();
