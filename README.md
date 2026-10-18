@@ -22,6 +22,6 @@ Search for any dish and get a real recipe from the web, with photos, the origina
 
 `index.html` is a single self-contained page. Recipe search calls TheMealDB's free public API straight from the browser, so it works anywhere, including GitHub Pages.
 
-Athlete diet plans and "Adjust this recipe" ask Claude through the claude.ai Artifact runtime (`window.claude.use("sample")`), so they need the claude.ai version. On GitHub Pages the plan button links there, and each example meal finds a web recipe instead. On claude.ai, if the recipe library can't be reached, Claude develops the recipe instead.
+Athlete diet plans and full recipe rewrites ("Adjust this recipe") ask Claude through the claude.ai Artifact runtime (`window.claude.use("sample")`), so they need the claude.ai version. On GitHub Pages the plan button links there, each example meal finds a web recipe instead, and "Adjust this recipe" asks Chef Pip to explain the changes. On claude.ai, if the recipe library can't be reached, Claude develops the recipe instead.
 
 `trending/update.mjs` fetches Wikipedia page views for the dishes in `trending/dishes.json` and writes `trending.json`; `.github/workflows/trending.yml` runs it daily. `sw.js` caches the page for offline use, and `404.html` sends mistyped addresses back to the home page.
