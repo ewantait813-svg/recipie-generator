@@ -210,6 +210,28 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
 .gear svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 dialog.settings { border: 0; padding: 0; margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(400px, 100%); max-width: 100%; background: var(--card); color: var(--ink); box-shadow: -10px 0 40px rgba(0, 0, 0, 0.18); }
 dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
+
+/* Cook mode: one step at a time, full screen */
+dialog.cook { border: 0; padding: 0; margin: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: var(--paper); color: var(--ink); }
+dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden; }
+.cook-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(env(safe-area-inset-top, 0px) + 14px) max(18px, env(safe-area-inset-right, 0px)) 10px max(18px, env(safe-area-inset-left, 0px)); }
+.cook-head h2 { font-size: 1.05rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cook-head .tools { flex-wrap: nowrap; }
+.cook-bar { height: 4px; background: var(--line); margin: 0 max(18px, env(safe-area-inset-left, 0px)); border-radius: 2px; overflow: hidden; }
+.cook-bar i { display: block; height: 100%; background: var(--saffron); transition: width .25s ease; }
+.cook-body { overflow: auto; padding: 24px max(18px, env(safe-area-inset-left, 0px)); display: grid; align-content: start; gap: 18px; max-width: 820px; width: 100%; margin: 0 auto; }
+.cook-count { font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cook-text { font-size: clamp(1.35rem, 4.6vw, 2rem); line-height: 1.45; margin: 0; }
+.cook-text .temp { font-size: .85em; }
+.cook-body .timer { font-size: 17px; padding: 10px 18px; justify-self: start; }
+.cook-ings { border-top: 2px dashed var(--line); padding-top: 14px; }
+.cook-ings ul { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 8px; }
+.cook-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px max(18px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(18px, env(safe-area-inset-left, 0px)); border-top: 1px solid var(--line); background: var(--card); }
+.cook-nav button { font-size: 1.15rem; padding: 16px; }
+.cook-nav .btn-ghost { font-family: var(--display); font-weight: 700; }
+.cook-alert { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; }
+.cook-alert b { margin: 0; }
+.cook-done { font-family: var(--display); font-size: clamp(1.8rem, 6vw, 2.6rem); font-weight: 800; margin: 0; }
 .set-in { display: grid; gap: 26px; padding: calc(env(safe-area-inset-top, 0px) + 22px) max(22px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px) 22px; }
 .set-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--line); padding-bottom: 12px; }
 .set-head h2 { font-size: 1.4rem; }
@@ -286,7 +308,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
 @media print {
   :root { --paper: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #bbb; --basil: #000; --basil-soft: #fff; --saffron-soft: #fff; }
   body { padding: 0; font-size: 11.5pt; }
-  header.top, .ticket, .card-actions, .refine, .timer, .serv button, .ing input, .meal .cook, .daytabs, dialog { display: none !important; }
+  header.top, .ticket, .card-actions, .refine, .timer, .serv button, .ing input, .meal .cook, .daytabs, dialog, dialog.cook[open] { display: none !important; }
   .bench { display: block; }
   .card { border: 0; overflow: visible; }
   .card-top, .ingredients, .method, .notes { padding: 12px 0; }
@@ -374,6 +396,22 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
         <button type="button" class="btn-ghost warn" id="clear-box">Clear recipe box</button>
         <p class="note" id="danger-note">Settings and your recipe box are saved in this browser only.</p>
       </div>
+    </div>
+  </dialog>
+
+  <dialog class="cook" id="cook" aria-labelledby="cook-title">
+    <div class="cook-head">
+      <h2 id="cook-title"></h2>
+      <div class="tools">
+        <button type="button" class="btn-ghost" id="cook-ings-toggle" aria-expanded="false">Ingredients</button>
+        <button type="button" class="x" id="cook-close" aria-label="Exit cook mode">×</button>
+      </div>
+    </div>
+    <div class="cook-bar" aria-hidden="true"><i id="cook-progress"></i></div>
+    <div class="cook-body" id="cook-body" aria-live="polite"></div>
+    <div class="cook-nav">
+      <button type="button" class="btn-ghost" id="cook-prev">← Back</button>
+      <button type="button" class="btn" id="cook-next">Next →</button>
     </div>
   </dialog>
 
@@ -924,7 +962,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     } catch {}
   }
   function timerButton(i, minutes) {
-    const b = el("button", "timer"); b.type = "button";
+    const b = el("button", "timer"); b.type = "button"; b.dataset.step = i;
     const t = timers.get(i);
     const paint = () => {
       const t = timers.get(i);
@@ -938,11 +976,25 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       if (t) { clearInterval(t.iv); timers.delete(i); paint(); return; }
       try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
       const nt = { end: Date.now() + minutes * 60000, rang: false };
-      nt.iv = setInterval(() => { if (!b.isConnected) { return; } paint(); if (Date.now() >= nt.end && !nt.rang) { nt.rang = true; clearInterval(nt.iv); beep(); } }, 500);
+      // The timer keeps running and rings even after this button is re-rendered away (e.g. moving between cook-mode steps).
+      nt.iv = setInterval(() => {
+        if (Date.now() >= nt.end && !nt.rang) { nt.rang = true; clearInterval(nt.iv); beep(); timerDone(i); }
+        document.querySelectorAll(`.timer[data-step="${i}"]`).forEach(x => x.repaint?.());
+      }, 500);
       timers.set(i, nt); paint();
     };
+    b.repaint = paint;
     paint();
     return b;
+  }
+  function timerDone(i) {
+    setStatus(`Step ${i + 1} timer is done.`);
+    if (cookDlg.open && cookStep !== i) {
+      const n = el("p", "notice cook-alert"); n.setAttribute("role", "alert");
+      const go = el("button", "btn-ghost", "Go to step " + (i + 1)); go.type = "button"; go.onclick = () => { cookStep = i; paintCook(); };
+      n.append(el("b", null, `⏰ Step ${i + 1} timer is done`), go);
+      $("#cook-body").prepend(n);
+    }
   }
   function clearTimers() { timers.forEach(t => clearInterval(t.iv)); timers.clear(); }
 
@@ -977,7 +1029,9 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
   function extraActions() {
     const printB = el("button", "btn-ghost", "Print"); printB.type = "button";
     printB.onclick = () => window.print();
-    const out = [printB];
+    const out = [];
+    if (state.view === "recipe" && state.recipe.steps?.length) { const cookB = el("button", "btn-ghost", "Cook mode"); cookB.type = "button"; cookB.id = "cook-open"; cookB.onclick = () => openCook(); out.push(cookB); }
+    out.push(printB);
     const webId = state.view === "recipe" && state.recipe.web;
     if (webId && /^https?:/.test(location.protocol) && !window.claude && window.top === window) {
       const shareB = el("button", "btn-ghost", "Share link"); shareB.type = "button";
@@ -1448,6 +1502,64 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     clearArmed = false; store.set("tk-saved", []); renderSaved(); render(); b.textContent = "Clear recipe box";
     $("#danger-note").textContent = "Recipe box cleared.";
   };
+  // ---------- Cook mode ----------
+  const cookDlg = $("#cook");
+  let cookStep = 0, cookShowIngs = false, cookOwnLock = false;
+  function cookIngredients() {
+    const r = state.recipe, mult = state.servings / (r.servings || 1), wrap = el("div", "cook-ings");
+    wrap.append(el("h3", "sec-title", "Ingredients" + (mult !== 1 ? " · for " + state.servings + " servings" : "")));
+    const ul = el("ul");
+    (r.ingredient_groups || []).forEach((g, gi) => (g.items || []).forEach((it, ii) => {
+      const key = gi + ":" + ii, li = el("li"), lab = el("label", "ing" + (state.checked.has(key) ? " done" : ""));
+      const cb = el("input"); cb.type = "checkbox"; cb.checked = state.checked.has(key);
+      cb.onchange = () => { cb.checked ? state.checked.add(key) : state.checked.delete(key); lab.classList.toggle("done", cb.checked); };
+      lab.append(cb, el("span", "q", it.qty == null ? (it.raw || "") : fmtQty(Number(it.qty) * mult, it.unit)), el("span", "n", it.item + (it.note ? ", " + it.note : "")));
+      li.append(lab); ul.append(li);
+    }));
+    wrap.append(ul); return wrap;
+  }
+  function paintCook() {
+    const steps = state.recipe.steps || [], n = steps.length, body = $("#cook-body");
+    body.replaceChildren();
+    $("#cook-title").textContent = state.recipe.title || "Cook mode";
+    $("#cook-progress").style.width = (Math.min(cookStep + 1, n) / n * 100) + "%";
+    $("#cook-ings-toggle").setAttribute("aria-expanded", String(cookShowIngs));
+    if (cookStep >= n) {
+      body.append(el("p", "cook-count", "All " + n + " steps done"), el("p", "cook-done", "Time to eat. Enjoy!"));
+      $("#cook-next").textContent = "Finish";
+    } else {
+      const s = steps[cookStep];
+      body.append(el("p", "cook-count", `Step ${cookStep + 1} of ${n}` + (s.title ? " · " + s.title : "")));
+      const p = el("p", "cook-text"); stepText(p, s.text); body.append(p);
+      if (s.temp_c != null && !/\[\[T:/.test(s.text || "")) body.append(el("span", "temp", temp(s.temp_c)));
+      if (s.minutes) body.append(timerButton(cookStep, s.minutes));
+      $("#cook-next").textContent = cookStep === n - 1 ? "Finish →" : "Next →";
+    }
+    $("#cook-prev").disabled = cookStep === 0;
+    if (cookShowIngs) body.append(cookIngredients());
+    body.scrollTop = 0;
+  }
+  async function openCook() {
+    cookStep = 0; cookShowIngs = false;
+    paintCook();
+    try { cookDlg.showModal(); } catch { cookDlg.setAttribute("open", ""); }
+    if ("wakeLock" in navigator && !wakeLock) { await lockScreen(); cookOwnLock = !!wakeLock; }
+  }
+  function cookGo(d) {
+    const n = (state.recipe.steps || []).length;
+    if (d > 0 && cookStep >= n) { cookDlg.close(); return; }
+    cookStep = Math.max(0, Math.min(n, cookStep + d)); paintCook();
+  }
+  $("#cook-next").onclick = () => cookGo(1);
+  $("#cook-prev").onclick = () => cookGo(-1);
+  $("#cook-close").onclick = () => cookDlg.close();
+  $("#cook-ings-toggle").onclick = () => { cookShowIngs = !cookShowIngs; paintCook(); };
+  cookDlg.addEventListener("close", async () => { if (cookOwnLock && !wantWake) { try { await wakeLock?.release(); } catch {} wakeLock = null; } cookOwnLock = false; render(); });
+  cookDlg.addEventListener("keydown", e => { if (e.key === "ArrowRight") { e.preventDefault(); cookGo(1); } if (e.key === "ArrowLeft") { e.preventDefault(); cookGo(-1); } });
+  let touchX = null;
+  cookDlg.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+  cookDlg.addEventListener("touchend", e => { if (touchX == null) return; const dx = e.changedTouches[0].clientX - touchX; touchX = null; if (Math.abs(dx) > 60) cookGo(dx < 0 ? 1 : -1); }, { passive: true });
+
   const dlg = $("#settings");
   $("#open-settings").onclick = () => { paintSettings(); $("#danger-note").textContent = "Settings and your recipe box are saved in this browser only."; try { dlg.showModal(); } catch { dlg.setAttribute("open", ""); } };
   $("#close-settings").onclick = () => dlg.close();

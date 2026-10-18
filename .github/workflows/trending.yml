@@ -2,7 +2,10 @@ name: Update trending recipes
 
 on:
   schedule:
-    - cron: "17 6 * * *"
+    # 6am Pacific: 13:00 UTC in summer (PDT), 14:00 UTC in winter (PST). Both are scheduled and
+    # the job skips whichever one isn't 6am in Los Angeles.
+    - cron: "2 13 * * *"
+    - cron: "2 14 * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,12 +15,21 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Only run at 6am Pacific
+        id: gate
+        run: |
+          hour=$(TZ=America/Los_Angeles date +%H)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$hour" != "06" ]; then echo "run=false" >> "$GITHUB_OUTPUT"; echo "It's ${hour}:00 in Los Angeles, skipping."; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
         with:
           node-version: 20
       - run: node trending/update.mjs
+        if: steps.gate.outputs.run == 'true'
       - name: Commit if changed
+        if: steps.gate.outputs.run == 'true'
         run: |
           if git diff --quiet trending.json; then echo "No change"; exit 0; fi
           git config user.name "github-actions[bot]"
