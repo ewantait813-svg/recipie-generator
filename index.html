@@ -1499,11 +1499,18 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   }
 
   async function openMeal(m) {
+    // Slow lookups (e.g. a shared link) show a loading card instead of whatever was on screen.
+    const wait = setTimeout(() => cooking(m.strMeal ? "Opening " + m.strMeal : "Opening your recipe", ["Fetching the recipe"]), 200);
     try {
       if (!m.strInstructions) { const [full] = await mealdb("lookup.php?i=" + m.idMeal); if (!full) throw new Error("missing"); m = full; }
+      clearTimeout(wait); clearInterval(phaseTimer);
       bumpTicket(); show(fromMeal(m), false);
       setStatus("Ready. Tap a timer when you start a step.");
-    } catch { setStatus("Couldn't open that recipe. Try another one.", true); }
+    } catch {
+      clearTimeout(wait); clearInterval(phaseTimer);
+      if (card.querySelector(".cooking")) render();
+      setStatus("Couldn't open that recipe. Try another one.", true);
+    }
   }
 
   // ---------- Trending (ranked daily by trending/update.mjs from Wikipedia page views) ----------
