@@ -950,24 +950,28 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
 
     if (askEngine) card.append(askBox(r, mult));
 
+    // Without Claude (e.g. GitHub Pages), adjustments go to Chef Pip, who explains what to change.
+    const viaPip = !sample && askEngine;
+    if (!sample && !askEngine) return;
+    const adjust = v => viaPip ? adjustWithPip(v, r, mult) : refine(v);
     const ref = el("section", "refine");
     ref.append(el("h3", "sec-title", "Adjust this recipe"));
     const f = el("form"); f.id = "refine-form";
     const inp = el("input"); inp.id = "refine-input"; inp.type = "text"; inp.placeholder = "Make it spicier and use an air fryer"; inp.setAttribute("aria-label", "How should the recipe change?");
-    const b = el("button", "btn", "Revise"); b.type = "submit"; b.style.padding = "10px 16px"; b.style.fontSize = "1rem";
+    const b = el("button", "btn", viaPip ? "Ask Pip" : "Revise"); b.type = "submit"; b.style.padding = "10px 16px"; b.style.fontSize = "1rem";
     f.append(inp, b);
-    f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (v) refine(v); };
+    f.onsubmit = e => { e.preventDefault(); const v = inp.value.trim(); if (v) { if (viaPip) inp.value = ""; adjust(v); } };
     const ideas = el("div", "ideas");
-    ["Make it vegetarian", "Cut the time in half", "No special equipment", "Turn it into meal prep"].forEach(t => { const x = el("button", null, t); x.type = "button"; x.onclick = () => refine(t); ideas.append(x); });
+    ["Make it vegetarian", "Cut the time in half", "No special equipment", "Turn it into meal prep"].forEach(t => { const x = el("button", null, t); x.type = "button"; x.onclick = () => adjust(t); ideas.append(x); });
     ref.append(f, ideas);
-    if (!sample) ref.append(el("p", "fine", "Revising needs Claude, which isn't available in this view."));
+    if (viaPip) ref.append(el("p", "fine", "Chef Pip will walk you through exactly what to change, just above."));
     card.append(ref);
   }
 
   // ---------- Ask Chef Pip (Claude on claude.ai, Chrome's built-in AI on computers, Puter on phones and other browsers) ----------
   let askEngine = null, chromeAI = null;
   const chat = { key: "", items: [], busy: false, ctl: null, mult: 1 };
-  const ASK_RULES = "You are Chef Pip, the resident chef at Test Kitchen, a recipe website. Personality: warm, upbeat and a little cheeky, like a favourite cooking teacher. You sometimes call the user \"chef\", you're openly enthusiastic about good food, and you may slip in at most one light food pun per answer. Personality never gets in the way of a clear answer: lead with the useful part. Answer questions about the recipe below in plain words: substitutions, techniques, timing, storage, scaling, dietary changes, what to serve with it. Keep answers short (under 120 words) and practical, with no markdown headings. If a question isn't about cooking or this recipe, playfully steer back to the recipe. Don't make up nutrition facts or food-safety rules; when unsure, say so.";
+  const ASK_RULES = "You are Chef Pip, the resident chef at Test Kitchen, a recipe website. Personality: warm, upbeat and a little cheeky, like a favourite cooking teacher. You sometimes call the user \"chef\", you're openly enthusiastic about good food, and you may slip in at most one light food pun per answer. Personality never gets in the way of a clear answer: lead with the useful part. Answer questions about the recipe below in plain words: substitutions, techniques, timing, storage, scaling, dietary changes, what to serve with it. Keep answers short (under 120 words; up to 200 when asked to adjust the recipe) and practical, with no markdown headings. If a question isn't about cooking or this recipe, playfully steer back to the recipe. Don't make up nutrition facts or food-safety rules; when unsure, say so.";
   function recipeText(r, mult) {
     const ings = (r.ingredient_groups || []).flatMap(g => (g.items || []).map(it => "- " + (it.qty == null ? (it.raw || "") : fmtQty(Number(it.qty) * mult, it.unit)) + " " + (it.item || "") + (it.note ? ", " + it.note : "")));
     const steps = (r.steps || []).map((x, i) => (i + 1) + ". " + String(x.text || "").replace(/\[\[T:(-?\d+)\]\]/g, "$1°C"));
@@ -1018,8 +1022,13 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     if (a) { a.textContent = it.a || "Pip is thinking…"; a.classList.toggle("err", !!it.err); }
     const b = document.getElementById("ask-btn"); if (b) b.textContent = chat.busy ? "Stop" : "Ask";
   }
-  async function askRecipe(q, r, mult) {
-    const key = chat.key, i = chat.items.length, it = { q, a: "" };
+  function adjustWithPip(change, r, mult) {
+    if (chat.busy) return;
+    askRecipe("Adjust: " + change, r, mult, `Adjust this recipe: ${change}. Tell me exactly what to change: list the ingredient swaps or new amounts first, then which steps change and how. Keep everything else the same.`);
+    document.getElementById("ask-log")?.lastElementChild?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  }
+  async function askRecipe(q, r, mult, prompt = q) {
+    const key = chat.key, i = chat.items.length, it = { q, p: prompt, a: "" };
     chat.items.push(it); chat.busy = true; chat.ctl = new AbortController();
     const log = document.getElementById("ask-log"); if (log) log.append(askItem(it, i));
     paintAnswer(i);
@@ -1027,8 +1036,8 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     try {
       if (askEngine === "claude") {
         const msgs = [{ role: "user", content: ASK_RULES + "\n\n" + recipeText(r, mult) + "\n\nAnswer the questions that follow." }, { role: "assistant", content: "Sure, ask away." }];
-        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.q }, { role: "assistant", content: x.a }));
-        msgs.push({ role: "user", content: q });
+        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.p || x.q }, { role: "assistant", content: x.a }));
+        msgs.push({ role: "user", content: prompt });
         const res = await sample(msgs, { signal, cache: false, modelTier: "quick", onText: ({ text }) => { if (chat.key === key) { it.a = text; paintAnswer(i); } } });
         it.a = res.text;
       } else if (askEngine === "puter") {
@@ -1036,10 +1045,10 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
         try { if (!puter.auth.isSignedIn()) { it.a = "Sign in to Puter in the window that just opened (it's free) and Pip will answer."; paintAnswer(i); await puter.auth.signIn(); it.a = ""; paintAnswer(i); } }
         catch { throw { code: "signin" }; }
         const msgs = [{ role: "system", content: ASK_RULES + "\n\n" + recipeText(r, mult) }];
-        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.q }, { role: "assistant", content: x.a }));
-        msgs.push({ role: "user", content: q });
+        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.p || x.q }, { role: "assistant", content: x.a }));
+        msgs.push({ role: "user", content: prompt });
         let text = "";
-        for await (const part of await puter.ai.chat(msgs, { stream: true, signal, max_tokens: 400 })) {
+        for await (const part of await puter.ai.chat(msgs, { stream: true, signal, max_tokens: 600 })) {
           if (part?.type === "error") throw new Error(part.message || "error");
           if (part?.text) { text += part.text; if (chat.key !== key) return; it.a = text; paintAnswer(i); }
         }
@@ -1047,13 +1056,13 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
         if (!chromeAI) {
           chromeAI = await LanguageModel.create({
             signal, expectedOutputs: [{ type: "text", languages: ["en"] }],
-            initialPrompts: [{ role: "system", content: ASK_RULES + "\n\n" + recipeText(r, mult) }, ...chat.items.slice(0, i).filter(x => x.a && !x.err).flatMap(x => [{ role: "user", content: x.q }, { role: "assistant", content: x.a }])],
+            initialPrompts: [{ role: "system", content: ASK_RULES + "\n\n" + recipeText(r, mult) }, ...chat.items.slice(0, i).filter(x => x.a && !x.err).flatMap(x => [{ role: "user", content: x.p || x.q }, { role: "assistant", content: x.a }])],
             monitor(m) { m.addEventListener("downloadprogress", e => { if (chat.key === key && !it.a.trim()) { it.a = "Setting up Chrome's AI on this device (one-time download)… " + Math.round(e.loaded * 100) + "%"; paintAnswer(i); } }); }
           });
           it.a = "";
         }
         let text = "";
-        for await (const chunk of chromeAI.promptStreaming(q, { signal })) { text += chunk; if (chat.key !== key) return; it.a = text; paintAnswer(i); }
+        for await (const chunk of chromeAI.promptStreaming(prompt, { signal })) { text += chunk; if (chat.key !== key) return; it.a = text; paintAnswer(i); }
       }
       if (!it.a.trim()) throw new Error("empty");
     } catch (e) {
