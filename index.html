@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Test Kitchen · AI recipe developer</title>
+<meta name="description" content="Describe any dish and Claude develops a full recipe with weighed ingredients, doneness cues and timers. Or get a fueling plan built around your sport.">
+<meta name="theme-color" content="#f3f5ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141a17" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Test Kitchen">
+<meta property="og:description" content="Describe any dish and Claude develops a full recipe. Or get a fueling plan built around your sport.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ewantait813-svg.github.io/recipie-generator/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6b4f'/%3E%3Cpath d='M9 25V14a7 7 0 0 1 14 0v11z' fill='%23fdfdfa'/%3E%3Crect x='9' y='21' width='14' height='2.5' fill='%23e3a71f'/%3E%3C/svg%3E">
 </head>
 <body>
-<title>Test Kitchen</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -233,6 +241,26 @@ dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
 .daysum { font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding: 0 28px; }
 .caution { border-top: 1px solid var(--line); padding: 18px 28px; background: var(--saffron-soft); font-size: 15px; }
 .caution ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* Shown when the page runs outside claude.ai (e.g. GitHub Pages) */
+.notice { border: 1px solid var(--saffron); background: var(--saffron-soft); border-radius: 4px; padding: 12px 14px; font-size: 15px; line-height: 1.45; }
+.notice b { font-family: var(--display); display: block; margin-bottom: 2px; }
+.notice a { color: var(--ink); font-weight: 600; }
+.btn-ghost[aria-pressed="true"] { background: var(--basil); border-color: var(--basil); color: var(--card); }
+
+@media print {
+  :root { --paper: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #bbb; --basil: #000; --basil-soft: #fff; --saffron-soft: #fff; }
+  body { padding: 0; font-size: 11.5pt; }
+  header.top, .ticket, .card-actions, .refine, .timer, .serv button, .ing input, .meal .cook, .daytabs, dialog { display: none !important; }
+  .bench { display: block; }
+  .card { border: 0; overflow: visible; }
+  .card-top, .ingredients, .method, .notes { padding: 12px 0; }
+  .ingredients { border-right: 0; }
+  .ing { grid-template-columns: minmax(70px, auto) 1fr; }
+  .card-body { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 24px; }
+  ol.steps li, .group, .meal, .notes > div { break-inside: avoid; }
+  .ing.done .n, .ing.done .q { text-decoration: none; opacity: 1; }
+}
 </style>
 
 <div class="wrap">
@@ -464,6 +492,12 @@ dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
         </div>
       </div>
 
+      <div class="notice" id="offline-note" hidden>
+        <b>Viewing the demo</b>
+        Making new recipes and plans needs Claude, which only runs inside claude.ai. You can still browse the example, scale servings, switch units and run timers.
+        <a href="https://claude.ai/artifact/ES56QVvN9pjXCN2agBTytx" target="_blank" rel="noopener">Open Test Kitchen in Claude →</a>
+      </div>
+
       <div class="go">
         <button class="btn" type="submit" id="make">Develop recipe</button>
         <button class="btn-ghost" type="button" id="stop" hidden>Stop</button>
@@ -655,7 +689,7 @@ dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
     saveB.onclick = () => { saveRecipe(p); saveB.textContent = "Saved to recipe box"; };
     const copyB = el("button", "btn-ghost", "Copy as text"); copyB.type = "button";
     copyB.onclick = () => copyText(copyB);
-    act.append(saveB, copyB); top.append(act);
+    act.append(saveB, copyB, ...extraActions()); top.append(act);
     card.append(top);
 
     const tg = el("div", "targets");
@@ -757,7 +791,7 @@ dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
     saveB.onclick = () => { saveRecipe(r); saveB.textContent = "Saved to recipe box"; };
     const copyB = el("button", "btn-ghost", "Copy as text"); copyB.type = "button";
     copyB.onclick = () => copyText(copyB);
-    act.append(saveB, copyB);
+    act.append(saveB, copyB, ...extraActions());
     top.append(act);
     card.append(top);
 
@@ -879,6 +913,28 @@ dialog.settings::backdrop { background: rgba(10, 16, 12, 0.45); }
   function fallbackCopy(txt, btn) {
     const ta = el("textarea"); ta.value = txt; ta.style.width = "100%"; ta.style.minHeight = "200px"; ta.id = "copy-fallback";
     btn.closest(".card-top").append(ta); ta.select(); btn.textContent = "Select all and copy below";
+  }
+
+  // ---------- Print and keep-screen-on ----------
+  let wakeLock = null, wantWake = false;
+  async function lockScreen() {
+    try { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } catch { wakeLock = null; }
+  }
+  document.addEventListener("visibilitychange", () => { if (wantWake && !wakeLock && document.visibilityState === "visible") lockScreen(); });
+  function extraActions() {
+    const printB = el("button", "btn-ghost", "Print"); printB.type = "button";
+    printB.onclick = () => window.print();
+    if (!("wakeLock" in navigator)) return [printB];
+    const wakeB = el("button", "btn-ghost", "Keep screen on"); wakeB.type = "button"; wakeB.id = "wake";
+    wakeB.setAttribute("aria-pressed", String(wantWake));
+    wakeB.title = "Stops your screen from dimming while you cook";
+    wakeB.onclick = async () => {
+      wantWake = !wantWake;
+      if (wantWake) await lockScreen(); else { try { await wakeLock?.release(); } catch {} wakeLock = null; }
+      if (wantWake && !wakeLock) { wantWake = false; setStatus("This browser wouldn't keep the screen on.", true); }
+      wakeB.setAttribute("aria-pressed", String(wantWake));
+    };
+    return [printB, wakeB];
   }
 
   // ---------- Recipe box (this browser only) ----------
@@ -1178,7 +1234,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
-    if (!sample) { setStatus("Claude isn't available in this view. Open the page on claude.ai to develop recipes.", true); render(); return; }
+    if (!sample) { $("#offline-note").hidden = false; render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
     $("#photo-row").hidden = !canImages;
     render();
