@@ -660,7 +660,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     checked: new Set()
   };
   let mode = "recipe";
-  let sample = null, canImages = false, ctl = null, photoFile = null, noClaude = false;
+  let sample = null, canImages = false, ctl = null, photoFile = null, noClaude = !window.claude;
   const timers = new Map();
 
   // ---------- Units ----------
@@ -1498,6 +1498,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
 
   applySettings(); paintTicket(); renderSaved(); paintUnits();
   const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
+  if (noClaude) { document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); $("#offline-note").hidden = startMode === "trending"; }
   const linked = location.hash.match(/^#recipe=(\d+)$/);
   if (linked) { setMode("recipe"); openMeal({ idMeal: linked[1] }); }
   else if (startMode === "plan" || startMode === "trending") setMode(startMode); else render();
