@@ -1420,8 +1420,12 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     try {
       let meals = [], exact = false;
       if (dish) {
-        meals = await get("search.php?s=" + encodeURIComponent(dish));
-        exact = meals.length > 0;
+        const norm = t => t.toLowerCase().replace(/[^a-z0-9à-ÿ]+/g, " ").trim();
+        const [named, group] = await Promise.all([get("search.php?s=" + encodeURIComponent(dish)), groupMeals(dish, sig)]);
+        exact = named.length === 1 && !group.length && norm(named[0].strMeal) === norm(dish);
+        // Dishes whose name matches come first, then the rest of a matching category or cuisine ("pasta", "thai").
+        const seen = new Set(named.map(m => m.idMeal));
+        meals = [...named, ...group.filter(m => !seen.has(m.idMeal))];
         if (!meals.length) {
           // No exact match: search each meaningful word, then rank by how many of the words each dish matches.
           const STOP = new Set(["with", "and", "the", "easy", "quick", "best", "simple", "homemade", "recipe", "weeknight", "style", "healthy", "classic"]);
@@ -1453,6 +1457,20 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       if (sample) { busy(false); handedOff = true; develop(); setStatus("Couldn't reach the recipe library here, so Claude is developing one instead."); return; }
       setStatus("Couldn't reach the recipe library. Check your connection and try again.", true);
     } finally { if (!handedOff) busy(false); }
+  }
+
+  // TheMealDB categories and cuisines, fetched once, so "dessert" or "Italian" lists the whole group.
+  let groupLists = null;
+  async function groupMeals(dish, signal) {
+    groupLists ||= Promise.all(["c", "a"].map(k => mealdb("list.php?" + k + "=list").then(l => l.map(x => x.strCategory || x.strArea).filter(Boolean)).catch(() => [])))
+      .then(r => { if (!r[0].length && !r[1].length) groupLists = null; return r; });
+    const [cats, areas] = await groupLists;
+    const q = dish.toLowerCase().trim().replace(/\s+(food|dishes|recipes|meals|cuisine)$/, "").replace(/(es|s)$/, "");
+    const hit = (list, extra = []) => list.find(x => [x, ...extra].some(n => n.toLowerCase().replace(/(es|s)$/, "") === q));
+    const cat = hit(cats), area = hit(areas);
+    if (cat) return mealdb("filter.php?c=" + encodeURIComponent(cat), signal).catch(() => []);
+    if (area) return mealdb("filter.php?a=" + encodeURIComponent(area), signal).catch(() => []);
+    return [];
   }
 
   const BROWSE = ["Breakfast", "Chicken", "Beef", "Seafood", "Pasta", "Vegetarian", "Vegan", "Dessert"];
