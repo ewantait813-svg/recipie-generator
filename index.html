@@ -11,6 +11,11 @@
 <meta property="og:description" content="Describe any dish and Claude develops a full recipe. Or get a fueling plan built around your sport.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ewantait813-svg.github.io/recipie-generator/">
+<meta property="og:image" content="https://ewantait813-svg.github.io/recipie-generator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Test Kitchen: search real recipes, scale servings, switch units and cook along with step timers.">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a68'/%3E%3Cpath d='M9 25V14a7 7 0 0 1 14 0v11z' fill='%23fdfdfa'/%3E%3Crect x='9' y='21' width='14' height='2.5' fill='%23e8735a'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -1215,12 +1220,24 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     let handedOff = false;
     busy(true); setStatus(""); cooking("Searching for " + (dish || "recipes with " + pantry.split(/[,\n]/)[0].trim()), ["Searching the recipe library", "Checking matches"]);
     try {
-      let meals = [];
+      let meals = [], exact = false;
       if (dish) {
         meals = await get("search.php?s=" + encodeURIComponent(dish));
+        exact = meals.length > 0;
         if (!meals.length) {
-          const words = dish.toLowerCase().split(/\W+/).filter(w => w.length > 3).sort((a, b) => b.length - a.length);
-          for (const w of words) { meals = await get("search.php?s=" + encodeURIComponent(w)); if (!meals.length) meals = await get("filter.php?i=" + encodeURIComponent(w)); if (meals.length) break; }
+          // No exact match: search each meaningful word, then rank by how many of the words each dish matches.
+          const STOP = new Set(["with", "and", "the", "easy", "quick", "best", "simple", "homemade", "recipe", "weeknight", "style", "healthy", "classic"]);
+          const words = [...new Set(dish.toLowerCase().split(/[^a-zà-ÿ]+/).filter(w => w.length > 2 && !STOP.has(w)))];
+          const stem = w => w.replace(/(es|s)$/, "");
+          const score = m => words.filter(w => m.strMeal.toLowerCase().includes(stem(w))).length;
+          const union = lists => { const seen = new Map(); lists.flat().forEach(m => { if (!seen.has(m.idMeal)) seen.set(m.idMeal, m); }); return [...seen.values()]; };
+          meals = union(await Promise.all(words.map(w => get("search.php?s=" + encodeURIComponent(stem(w))))));
+          if (meals.length) meals.sort((x, y) => score(y) - score(x) || x.strMeal.localeCompare(y.strMeal));
+          else {
+            const byIng = await Promise.all(words.map(w => get("filter.php?i=" + encodeURIComponent(w))));
+            const hits = new Map(); byIng.flat().forEach(m => hits.set(m.idMeal, (hits.get(m.idMeal) || 0) + 1));
+            meals = union(byIng).sort((x, y) => hits.get(y.idMeal) - hits.get(x.idMeal));
+          }
         }
       } else {
         const first = pantry.split(/[,\n]/)[0].replace(/[\d½¼¾⅓.]+\s*(g|kg|ml|cups?|tbsp|tsp|oz|lbs?)?\b/gi, "").replace(/\b(a|an|some|half|bag|of|the)\b/gi, "").trim();
@@ -1229,7 +1246,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       const veg = diets.includes("Vegan") ? "Vegan" : diets.includes("Vegetarian") ? "Vegetarian" : "";
       if (veg && meals.length) { const ok = new Set((await get("filter.php?c=" + veg)).map(m => m.idMeal)); meals = meals.filter(m => ok.has(m.idMeal)); }
       const other = diets.filter(d => d !== "Vegan" && d !== "Vegetarian");
-      if (meals.length === 1 && !other.length) { busy(false); handedOff = true; await openMeal(meals[0]); return; }
+      if (exact && meals.length === 1 && !other.length) { busy(false); handedOff = true; await openMeal(meals[0]); return; }
       showResults(dish || pantry, meals.slice(0, 24), other);
       setStatus(meals.length ? `Found ${meals.length > 24 ? "24+" : meals.length} recipe${meals.length === 1 ? "" : "s"}. Pick one to open it.` : "");
     } catch (e) {
