@@ -352,7 +352,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     </div>
   </dialog>
 
-  <div class="bench">
+  <main class="bench">
     <form class="ticket" id="brief" autocomplete="off">
       <div class="ticket-head"><h2>Order ticket</h2><small id="ticket-no">No. 001</small></div>
 
@@ -429,12 +429,13 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       <div class="fields" id="recipe-fields">
       <div class="field">
         <label for="dish">What are we making?</label>
-        <input type="text" id="dish" placeholder="Crispy pork carnitas tacos" maxlength="160">
+        <input type="text" id="dish" placeholder="Spaghetti carbonara" maxlength="160">
         <div class="ideas" id="dish-ideas">
-          <button type="button">Sourdough focaccia</button>
           <button type="button">Thai green curry</button>
-          <button type="button">Gluten-free brownies</button>
-          <button type="button">Birria ramen</button>
+          <button type="button">Lasagne</button>
+          <button type="button">Pad Thai</button>
+          <button type="button">Fish tacos</button>
+          <button type="button">Brownies</button>
         </div>
       </div>
 
@@ -524,7 +525,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     </form>
 
     <article class="card" id="card" aria-live="polite"></article>
-  </div>
+  </main>
 </div>
 
 <script>
@@ -946,7 +947,19 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
   function extraActions() {
     const printB = el("button", "btn-ghost", "Print"); printB.type = "button";
     printB.onclick = () => window.print();
-    if (!("wakeLock" in navigator)) return [printB];
+    const out = [printB];
+    const webId = state.view === "recipe" && state.recipe.web;
+    if (webId && /^https?:/.test(location.protocol) && !window.claude && window.top === window) {
+      const shareB = el("button", "btn-ghost", "Share link"); shareB.type = "button";
+      shareB.onclick = async () => {
+        const url = location.href.split("#")[0] + "#recipe=" + webId;
+        try { if (navigator.share && matchMedia("(pointer: coarse)").matches) { await navigator.share({ title: state.recipe.title, url }); return; } } catch { return; }
+        try { await navigator.clipboard.writeText(url); shareB.textContent = "Link copied"; } catch { prompt("Copy this link:", url); }
+        setTimeout(() => shareB.textContent = "Share link", 1600);
+      };
+      out.push(shareB);
+    }
+    if (!("wakeLock" in navigator)) return out;
     const wakeB = el("button", "btn-ghost", "Keep screen on"); wakeB.type = "button"; wakeB.id = "wake";
     wakeB.setAttribute("aria-pressed", String(wantWake));
     wakeB.title = "Stops your screen from dimming while you cook";
@@ -956,7 +969,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       if (wantWake && !wakeLock) { wantWake = false; setStatus("This browser wouldn't keep the screen on.", true); }
       wakeB.setAttribute("aria-pressed", String(wantWake));
     };
-    return [printB, wakeB];
+    out.push(wakeB); return out;
   }
 
   // ---------- Recipe box (this browser only) ----------
@@ -983,13 +996,19 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
 
   function show(r, isExample) {
     clearTimers();
+    setLink(r.web);
     state.view = "recipe";
     state.recipe = r; state.isExample = !!isExample; state.servings = r.servings || 4; state.checked = new Set();
     render();
     if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+  function setLink(id) {
+    const want = id ? "#recipe=" + id : "";
+    if (location.hash === want || (!want && !/^#recipe=/.test(location.hash))) return;
+    try { history.replaceState(null, "", location.pathname + location.search + want); } catch {}
+  }
   function showPlan(p, isExample) {
-    clearTimers();
+    clearTimers(); setLink();
     state.view = "plan"; state.plan = p; state.planExample = !!isExample; state.day = 0;
     render();
     if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1210,6 +1229,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       const veg = diets.includes("Vegan") ? "Vegan" : diets.includes("Vegetarian") ? "Vegetarian" : "";
       if (veg && meals.length) { const ok = new Set((await get("filter.php?c=" + veg)).map(m => m.idMeal)); meals = meals.filter(m => ok.has(m.idMeal)); }
       const other = diets.filter(d => d !== "Vegan" && d !== "Vegetarian");
+      if (meals.length === 1 && !other.length) { busy(false); handedOff = true; await openMeal(meals[0]); return; }
       showResults(dish || pantry, meals.slice(0, 24), other);
       setStatus(meals.length ? `Found ${meals.length > 24 ? "24+" : meals.length} recipe${meals.length === 1 ? "" : "s"}. Pick one to open it.` : "");
     } catch (e) {
@@ -1220,10 +1240,25 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     } finally { if (!handedOff) busy(false); }
   }
 
-  function showResults(query, meals, otherDiets) {
-    clearTimers(); card.replaceChildren();
+  const BROWSE = ["Breakfast", "Chicken", "Beef", "Seafood", "Pasta", "Vegetarian", "Vegan", "Dessert"];
+  async function browse(cat) {
+    const ac = ctl = new AbortController();
+    busy(true); setStatus(""); cooking("Browsing " + cat.toLowerCase(), ["Searching the recipe library", "Checking matches"]);
+    try { const meals = await mealdb("filter.php?c=" + encodeURIComponent(cat), ac.signal); showResults(cat, meals.slice(0, 24), [], true); setStatus(`Showing ${Math.min(meals.length, 24)} ${cat.toLowerCase()} recipes. Pick one to open it.`); }
+    catch { render(); setStatus(ac.signal.aborted ? "Stopped." : "Couldn't reach the recipe library. Check your connection and try again.", !ac.signal.aborted); }
+    finally { busy(false); }
+  }
+  function browseRow() {
+    const d = el("div"); d.append(el("h3", "sec-title", "Browse"));
+    const chips = el("div", "chips"); chips.style.marginTop = "8px";
+    BROWSE.forEach(c => { const b = el("button", "chip", c); b.type = "button"; b.onclick = () => browse(c); chips.append(b); });
+    d.append(chips); return d;
+  }
+
+  function showResults(query, meals, otherDiets, isBrowse) {
+    clearTimers(); setLink(); card.replaceChildren();
     const top = el("div", "card-top");
-    top.append(el("span", "flag", "From the web"), el("h2", null, meals.length ? "Recipes for “" + query + "”" : "Nothing found for “" + query + "”"));
+    top.append(el("span", "flag", "From the web"), el("h2", null, isBrowse ? query + " recipes" : meals.length ? "Recipes for “" + query + "”" : "Nothing found for “" + query + "”"));
     if (otherDiets.length) top.append(el("p", "desc", otherDiets.join(", ") + " can't be filtered automatically for web recipes. Check the ingredients before you cook."));
     card.append(top);
     const sec = el("section", "results");
@@ -1243,7 +1278,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     rnd.onclick = async () => { try { const [m] = await mealdb("random.php"); if (m) openMeal(m); } catch { setStatus("Couldn't reach the recipe library.", true); } };
     more.append(rnd);
     if (sample) { const c = el("button", "btn-ghost", "Have Claude develop it instead"); c.type = "button"; c.onclick = () => develop(); more.append(c); }
-    sec.append(more);
+    sec.append(more, browseRow());
     card.append(sec);
     if (window.innerWidth <= 860) card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -1355,6 +1390,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     $("#recipe-fields").hidden = m !== "recipe";
     $("#pantry-field").hidden = m !== "recipe";
     $("#make").textContent = m === "plan" ? "Build my diet plan" : "Find recipes";
+    if (m === "plan") setLink();
     if (state.view !== m) { state.view = m; render(); }
     store.set("tk-mode", m);
   }
@@ -1363,14 +1399,16 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   document.querySelectorAll(".units button").forEach(b => b.onclick = () => setUnits(b.dataset.u));
   document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
   document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
-  document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; $("#dish").focus(); });
+  document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; findRecipes(); });
   $("#brief").onsubmit = e => { e.preventDefault(); mode === "plan" ? buildPlan() : findRecipes(); };
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
   applySettings(); paintTicket(); renderSaved(); paintUnits();
   const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
-  if (startMode === "plan") setMode("plan"); else render();
+  const linked = location.hash.match(/^#recipe=(\d+)$/);
+  if (linked) { setMode("recipe"); openMeal({ idMeal: linked[1] }); }
+  else if (startMode === "plan") setMode("plan"); else render();
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
