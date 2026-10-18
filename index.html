@@ -195,6 +195,16 @@ ol.steps li::before { content: counter(s); font-family: var(--display); font-wei
 .refine form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .refine input { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 10px 12px; font-size: 16px; min-width: 0; }
 .refine .ideas button { font-size: 13.5px; }
+.ask { border-top: 2px dashed var(--line); padding: 20px 28px 22px; display: grid; gap: 10px; }
+.ask form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.ask input { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 10px 12px; font-size: 16px; min-width: 0; }
+.ask .ideas button { font-size: 13.5px; }
+.ask .log { display: grid; gap: 10px; }
+.ask .log:empty { display: none; }
+.ask .q { font-weight: 700; margin: 0; }
+.ask .a { margin: 4px 0 0; white-space: pre-wrap; line-height: 1.5; }
+.ask .a.err { border-left: 3px solid var(--saffron); padding-left: 10px; }
+.ask .hello { margin: 0; color: var(--muted, inherit); }
 
 .cooking { padding: 60px 28px; display: grid; gap: 14px; justify-items: start; }
 .cooking h2 { font-size: 1.8rem; }
@@ -308,7 +318,7 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
 @media print {
   :root { --paper: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #bbb; --basil: #000; --basil-soft: #fff; --saffron-soft: #fff; }
   body { padding: 0; font-size: 11.5pt; }
-  header.top, .ticket, .card-actions, .refine, .timer, .serv button, .ing input, .meal .cook, .daytabs, dialog, dialog.cook[open] { display: none !important; }
+  header.top, .ticket, .card-actions, .refine, .ask, .timer, .serv button, .ing input, .meal .cook, .daytabs, dialog, dialog.cook[open] { display: none !important; }
   .bench { display: block; }
   .card { border: 0; overflow: visible; }
   .card-top, .ingredients, .method, .notes { padding: 12px 0; }
@@ -938,6 +948,8 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     }
     if (notes.childNodes.length) card.append(notes);
 
+    if (askEngine) card.append(askBox(r, mult));
+
     const ref = el("section", "refine");
     ref.append(el("h3", "sec-title", "Adjust this recipe"));
     const f = el("form"); f.id = "refine-form";
@@ -950,6 +962,111 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     ref.append(f, ideas);
     if (!sample) ref.append(el("p", "fine", "Revising needs Claude, which isn't available in this view."));
     card.append(ref);
+  }
+
+  // ---------- Ask Chef Pip (Claude on claude.ai, Chrome's built-in AI on computers, Puter on phones and other browsers) ----------
+  let askEngine = null, chromeAI = null;
+  const chat = { key: "", items: [], busy: false, ctl: null, mult: 1 };
+  const ASK_RULES = "You are Chef Pip, the resident chef at Test Kitchen, a recipe website. Personality: warm, upbeat and a little cheeky, like a favourite cooking teacher. You sometimes call the user \"chef\", you're openly enthusiastic about good food, and you may slip in at most one light food pun per answer. Personality never gets in the way of a clear answer: lead with the useful part. Answer questions about the recipe below in plain words: substitutions, techniques, timing, storage, scaling, dietary changes, what to serve with it. Keep answers short (under 120 words) and practical, with no markdown headings. If a question isn't about cooking or this recipe, playfully steer back to the recipe. Don't make up nutrition facts or food-safety rules; when unsure, say so.";
+  function recipeText(r, mult) {
+    const ings = (r.ingredient_groups || []).flatMap(g => (g.items || []).map(it => "- " + (it.qty == null ? (it.raw || "") : fmtQty(Number(it.qty) * mult, it.unit)) + " " + (it.item || "") + (it.note ? ", " + it.note : "")));
+    const steps = (r.steps || []).map((x, i) => (i + 1) + ". " + String(x.text || "").replace(/\[\[T:(-?\d+)\]\]/g, "$1°C"));
+    return `Recipe: ${r.title}\nServes: ${Math.round((r.servings || 0) * mult) || "?"}\nIngredients:\n${ings.join("\n")}\nMethod:\n${steps.join("\n")}`;
+  }
+  async function detectAsk() {
+    if (sample) return "claude";
+    try { if (typeof LanguageModel !== "undefined" && (await LanguageModel.availability({ expectedOutputs: [{ type: "text", languages: ["en"] }] })) !== "unavailable") return "chrome"; } catch {}
+    return /^https?:$/.test(location.protocol) && window.top === window && !window.claude ? "puter" : null;
+  }
+  let puterLoad = null;
+  function loadPuter() {
+    return puterLoad ||= new Promise((ok, bad) => {
+      if (window.puter) return ok(window.puter);
+      const sc = document.createElement("script"); sc.src = "https://js.puter.com/v2/"; sc.async = true;
+      sc.onload = () => window.puter ? ok(window.puter) : bad(new Error("no puter"));
+      sc.onerror = () => { puterLoad = null; bad(new Error("load")); };
+      document.head.append(sc);
+    });
+  }
+  function askBox(r, mult) {
+    const key = keyOf(r);
+    if (chat.key !== key) { chat.ctl?.abort(); try { chromeAI?.destroy(); } catch {} chromeAI = null; Object.assign(chat, { key, items: [], busy: false, ctl: null, mult }); }
+    if (chat.mult !== mult && !chat.busy) { try { chromeAI?.destroy(); } catch {} chromeAI = null; chat.mult = mult; }
+    const sec = el("section", "ask");
+    sec.append(el("h3", "sec-title", "Ask Chef Pip"));
+    if (askEngine === "puter") loadPuter().catch(() => {});
+    const log = el("div", "log"); log.id = "ask-log"; log.setAttribute("aria-live", "polite");
+    chat.items.forEach((it, i) => log.append(askItem(it, i)));
+    const f = el("form"); f.id = "ask-form";
+    const inp = el("input"); inp.id = "ask-input"; inp.type = "text"; inp.maxLength = 300; inp.placeholder = "What can I use instead of butter?"; inp.setAttribute("aria-label", "Your question about this recipe");
+    const b = el("button", "btn", chat.busy ? "Stop" : "Ask"); b.type = "submit"; b.id = "ask-btn"; b.style.padding = "10px 16px"; b.style.fontSize = "1rem";
+    f.append(inp, b);
+    f.onsubmit = e => { e.preventDefault(); if (chat.busy) { chat.ctl?.abort(); return; } const v = inp.value.trim(); if (v) { inp.value = ""; askRecipe(v, r, mult); } };
+    const ideas = el("div", "ideas");
+    ["Can I make it ahead?", "How do I make it vegetarian?", "What should I serve with it?", "How do I store leftovers?"].forEach(t => { const x = el("button", null, t); x.type = "button"; x.onclick = () => { if (!chat.busy) askRecipe(t, r, mult); }; ideas.append(x); });
+    if (!chat.items.length) sec.append(el("p", "hello", `Hi chef! I'm Pip. Ask me anything about this ${r.title || "recipe"}: swaps, timing, leftovers, you name it.`));
+    sec.append(log, f, ideas);
+    sec.append(el("p", "fine", "Pip is an AI and can get things wrong, so trust your judgement. " + (askEngine === "claude" ? "Powered by Claude." : askEngine === "chrome" ? "Powered by Chrome's built-in AI, running on your device." : "Powered by Puter: the first time, you'll be asked to sign in to a free Puter account.")));
+    return sec;
+  }
+  function askItem(it, i) {
+    const d = el("div"); d.append(el("p", "q", it.q));
+    const a = el("p", "a" + (it.err ? " err" : ""), it.a || "Pip is thinking…"); a.id = "ask-a-" + i; d.append(a); return d;
+  }
+  function paintAnswer(i) {
+    const it = chat.items[i], a = document.getElementById("ask-a-" + i);
+    if (a) { a.textContent = it.a || "Pip is thinking…"; a.classList.toggle("err", !!it.err); }
+    const b = document.getElementById("ask-btn"); if (b) b.textContent = chat.busy ? "Stop" : "Ask";
+  }
+  async function askRecipe(q, r, mult) {
+    const key = chat.key, i = chat.items.length, it = { q, a: "" };
+    chat.items.push(it); chat.busy = true; chat.ctl = new AbortController();
+    const log = document.getElementById("ask-log"); if (log) log.append(askItem(it, i));
+    paintAnswer(i);
+    const signal = chat.ctl.signal;
+    try {
+      if (askEngine === "claude") {
+        const msgs = [{ role: "user", content: ASK_RULES + "\n\n" + recipeText(r, mult) + "\n\nAnswer the questions that follow." }, { role: "assistant", content: "Sure, ask away." }];
+        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.q }, { role: "assistant", content: x.a }));
+        msgs.push({ role: "user", content: q });
+        const res = await sample(msgs, { signal, cache: false, modelTier: "quick", onText: ({ text }) => { if (chat.key === key) { it.a = text; paintAnswer(i); } } });
+        it.a = res.text;
+      } else if (askEngine === "puter") {
+        const puter = await loadPuter();
+        try { if (!puter.auth.isSignedIn()) { it.a = "Sign in to Puter in the window that just opened (it's free) and Pip will answer."; paintAnswer(i); await puter.auth.signIn(); it.a = ""; paintAnswer(i); } }
+        catch { throw { code: "signin" }; }
+        const msgs = [{ role: "system", content: ASK_RULES + "\n\n" + recipeText(r, mult) }];
+        chat.items.slice(0, i).filter(x => x.a && !x.err).forEach(x => msgs.push({ role: "user", content: x.q }, { role: "assistant", content: x.a }));
+        msgs.push({ role: "user", content: q });
+        let text = "";
+        for await (const part of await puter.ai.chat(msgs, { stream: true, signal, max_tokens: 400 })) {
+          if (part?.type === "error") throw new Error(part.message || "error");
+          if (part?.text) { text += part.text; if (chat.key !== key) return; it.a = text; paintAnswer(i); }
+        }
+      } else {
+        if (!chromeAI) {
+          chromeAI = await LanguageModel.create({
+            signal, expectedOutputs: [{ type: "text", languages: ["en"] }],
+            initialPrompts: [{ role: "system", content: ASK_RULES + "\n\n" + recipeText(r, mult) }, ...chat.items.slice(0, i).filter(x => x.a && !x.err).flatMap(x => [{ role: "user", content: x.q }, { role: "assistant", content: x.a }])],
+            monitor(m) { m.addEventListener("downloadprogress", e => { if (chat.key === key && !it.a.trim()) { it.a = "Setting up Chrome's AI on this device (one-time download)… " + Math.round(e.loaded * 100) + "%"; paintAnswer(i); } }); }
+          });
+          it.a = "";
+        }
+        let text = "";
+        for await (const chunk of chromeAI.promptStreaming(q, { signal })) { text += chunk; if (chat.key !== key) return; it.a = text; paintAnswer(i); }
+      }
+      if (!it.a.trim()) throw new Error("empty");
+    } catch (e) {
+      if (chat.key !== key) return;
+      it.err = true;
+      it.a = signal.aborted ? (it.a ? it.a.trimEnd() + " (stopped)" : "Stopped.")
+        : e?.code === "signin" ? "Pip needs you signed in to Puter to answer. Tap Ask to try again, and allow the pop-up if your browser blocks it."
+        : askEngine === "claude" ? (e?.code === "rate_limited" ? "Whoa, too many questions at once! Give me a moment, chef, then try again." : "Pip couldn't reach the kitchen. Try again.")
+        : askEngine === "puter" ? "Pip couldn't reach the kitchen. Check your connection and try again. If Puter says you're out of free credit, it'll reset next month."
+        : "Pip couldn't answer that through Chrome's AI. Try again, or check you're on the latest desktop Chrome.";
+    } finally {
+      if (chat.key === key) { chat.busy = false; paintAnswer(i); }
+    }
   }
 
   // ---------- Timers ----------
@@ -1620,6 +1737,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+    askEngine = await detectAsk();
     if (!sample) { noClaude = true; setMode(mode); $("#offline-note").hidden = mode === "trending"; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
     $("#photo-row").hidden = !canImages;
