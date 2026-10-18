@@ -6,6 +6,13 @@ Search for any dish and get a real recipe from the web, with photos, the origina
 
 **Full AI version on claude.ai:** https://claude.ai/artifact/ES56QVvN9pjXCN2agBTytx
 
+<p>
+  <img src="docs/screenshots/search.png" width="200" alt="Search results for pasta">
+  <img src="docs/screenshots/recipe.png" width="200" alt="A recipe with servings, Cook mode and ingredients">
+  <img src="docs/screenshots/cook-mode.png" width="200" alt="Cook mode showing one step at a time">
+  <img src="docs/screenshots/chef-pip.png" width="200" alt="Ask Chef Pip box under a recipe">
+</p>
+
 ## What it does
 
 - **Search** by dish name ("lasagne"), category or cuisine ("pasta", "desserts", "Thai food"), or an ingredient you have, and filter for vegetarian or vegan. An exact name opens the recipe straight away.
