@@ -765,7 +765,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
         row.append(el("div", "t", m.time || ""));
         const mid = el("div"); mid.append(el("h4", null, m.name));
         const ul = el("ul"); (m.items || []).forEach(i => ul.append(el("li", null, i))); mid.append(ul);
-        const cook = el("button", "cook", "Cook this as a recipe"); cook.type = "button";
+        const cook = el("button", "cook", noClaude ? "Find a recipe for this" : "Cook this as a recipe"); cook.type = "button";
         cook.onclick = () => cookMeal(m);
         mid.append(cook); row.append(mid);
         const mac = el("div", "mac");
@@ -1044,6 +1044,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
 
   function cookMeal(m) {
     setMode("recipe");
+    if (noClaude) { $("#dish").value = m.name; findRecipes(); return; }
     $("#dish").value = m.name + (m.items?.length ? " (" + m.items.join("; ") + ")" : "");
     $("#servings").value = "1";
     develop();
@@ -1474,7 +1475,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     $("#trend-info").hidden = m !== "trending";
     if (noClaude) $("#offline-note").hidden = m === "trending";
     document.querySelector(".go").hidden = m === "trending";
-    $("#make").textContent = m === "plan" ? "Build my diet plan" : "Find recipes";
+    $("#make").textContent = m === "plan" ? (noClaude ? "Build my plan in Claude →" : "Build my diet plan") : "Find recipes";
     if (m !== "recipe") setLink();
     if (state.view !== m) { state.view = m; render(); }
     store.set("tk-mode", m);
@@ -1485,7 +1486,11 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === state.units)));
   document.querySelectorAll("#diet .chip").forEach(c => c.onclick = () => c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true")));
   document.querySelectorAll("#dish-ideas button").forEach(b => b.onclick = () => { $("#dish").value = b.textContent; findRecipes(); });
-  $("#brief").onsubmit = e => { e.preventDefault(); mode === "plan" ? buildPlan() : findRecipes(); };
+  $("#brief").onsubmit = e => {
+    e.preventDefault();
+    if (mode === "plan" && noClaude) { window.open($("#offline-note a").href, "_blank", "noopener"); return; }
+    mode === "plan" ? buildPlan() : findRecipes();
+  };
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
@@ -1497,7 +1502,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
-    if (!sample) { noClaude = true; $("#offline-note").hidden = mode === "trending"; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
+    if (!sample) { noClaude = true; setMode(mode); $("#offline-note").hidden = mode === "trending"; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
     $("#photo-row").hidden = !canImages;
     render();
