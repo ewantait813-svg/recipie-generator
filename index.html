@@ -1394,7 +1394,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   let trending = null, trendingAll = false;
   async function loadTrending() {
     try { const res = await fetch(TRENDING_URL, { cache: "no-cache" }); if (!res.ok) throw 0; trending = await res.json(); }
-    catch { trending = { error: true }; }
+    catch { trending = window.TRENDING_SNAPSHOT || { error: true }; }
     if (state.view === "trending") renderTrending();
   }
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : String(n);
