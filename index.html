@@ -670,8 +670,9 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     }
     if (["l", "liter", "litre"].includes(u)) return fmtQty(qty * 1000, "ml");
     if (["whole", "piece", "pieces", "each", ""].includes(u)) return frac(qty);
-    const plural = qty > 1.1 && !/s$/.test(u) && !["tsp", "tbsp"].includes(u) ? "s" : "";
-    return frac(qty) + " " + u + plural;
+    const many = qty > 1.1 && !/s$/.test(u) && !["tsp", "tbsp", "cm", "pinch", "dash"].includes(u);
+    const word = !many ? u : u === "leaf" ? "leaves" : /(ch|sh|x)$/.test(u) ? u + "es" : u + "s";
+    return frac(qty) + " " + word;
   }
   function temp(c) {
     c = Number(c);
@@ -1172,12 +1173,13 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   }
 
   const UNIT = { g: ["g", 1], gram: ["g", 1], grams: ["g", 1], kg: ["g", 1000], ml: ["ml", 1], l: ["ml", 1000], litre: ["ml", 1000], liter: ["ml", 1000],
-    cup: ["ml", 240], cups: ["ml", 240], oz: ["g", 28.35], lb: ["g", 453.6], lbs: ["g", 453.6], pound: ["g", 453.6], pounds: ["g", 453.6],
+    cup: ["ml", 240], cups: ["ml", 240], oz: ["g", 28.35], ounce: ["g", 28.35], ounces: ["g", 28.35], litres: ["ml", 1000], liters: ["ml", 1000], millilitres: ["ml", 1], milliliters: ["ml", 1], kilograms: ["g", 1000], lb: ["g", 453.6], lbs: ["g", 453.6], pound: ["g", 453.6], pounds: ["g", 453.6],
     tsp: ["tsp", 1], teaspoon: ["tsp", 1], teaspoons: ["tsp", 1], tbsp: ["tbsp", 1], tbs: ["tbsp", 1], tbls: ["tbsp", 1], tblsp: ["tbsp", 1], tbsps: ["tbsp", 1], tsps: ["tsp", 1], tablespoon: ["tbsp", 1], tablespoons: ["tbsp", 1] };
-  const COUNT = ["clove", "slice", "can", "tin", "sprig", "stick", "bunch", "piece", "leaf", "stalk", "head", "fillet", "egg", "rasher", "sheet", "pack", "packet", "jar", "bag", "knob", "cube", "pod", "handful"];
+  const COUNT = ["clove", "slice", "can", "tin", "sprig", "stick", "bunch", "piece", "leaf", "stalk", "head", "fillet", "egg", "rasher", "sheet", "pack", "packet", "jar", "bag", "knob", "cube", "pod", "handful", "pot", "tub", "strip", "bulb", "cm", "inch", "drop", "glass", "bottle", "carton", "block", "ball", "pinch", "dash"];
   function parseMeasure(m) {
     const FRAC = { "½": "1/2", "¼": "1/4", "¾": "3/4", "⅓": "1/3", "⅔": "2/3", "⅛": "1/8" };
-    m = String(m || "").replace(/(\d)?\s*([½¼¾⅓⅔⅛])/g, (_, d, f) => (d ? d + " " : "") + FRAC[f]).replace(/\s+/g, " ").trim();
+    m = String(m || "").replace(/(\d)?\s*([½¼¾⅓⅔⅛])/g, (_, d, f) => (d ? d + " " : "") + FRAC[f]).replace(/(\d)-(\d+\/\d+)/g, "$1 $2").replace(/\s+/g, " ").trim();
+    if (/^\d[\d./ ]*\s*(-|–|to)\s*\d/i.test(m) && m.length <= 18) return { qty: null, unit: "", raw: m };
     const x = m.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d*\.?\d+)\s*([a-zA-Z]+)?\.?\s*(.*)$/);
     if (!x) return /^(a\s+)?(pinch|handfull?|dash|splash|sprinkl\w*|drizzle|to taste|few)/i.test(m) && m.length <= 16 ? { qty: null, unit: "", raw: m } : { qty: null, unit: "", raw: "", note: m.toLowerCase() };
     const n = x[1].split(/\s+/).reduce((t, p) => t + (p.includes("/") ? p.split("/")[0] / p.split("/")[1] : Number(p)), 0);
@@ -1196,7 +1198,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       items.push({ qty: pm.qty, unit: pm.unit, raw: pm.raw || "", item: name, note: pm.note || "" });
     }
     let paras = String(m.strInstructions || "").split(/\r?\n+/).map(t => t.trim())
-      .filter(t => t && !/^(step\s*)?\d+[.):]?$/i.test(t)).map(t => t.replace(/^(step\s*\d+[.):]?|\d+[.)])\s*/i, ""));
+      .filter(t => t && (t.match(/\p{L}/gu) || []).length >= 3 && !/^(step\s*)?\d+[.):]?$/i.test(t)).map(t => t.replace(/^(step\s*\d+[.):]?|\d+[.)])\s*/i, ""));
     if (paras.length === 1) {
       const sent = paras[0].match(/[^.!?]+[.!?]+(\s|$)/g) || paras;
       paras = []; for (let i = 0; i < sent.length; i += 2) paras.push(sent.slice(i, i + 2).join("").trim());
