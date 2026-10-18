@@ -128,6 +128,23 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .result small { display: block; padding: 0 12px; font-family: var(--mono); font-weight: 400; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .result:hover, .result:focus-visible { border-color: var(--basil); }
 .sources a { color: var(--basil); font-weight: 600; }
+
+/* Trending */
+.trend-info { margin: 0; color: var(--muted); font-size: 15.5px; }
+.trend-list { list-style: none; margin: 0; padding: 8px 28px 24px; display: grid; }
+.trend-list li + li { border-top: 1px solid var(--line); }
+.trend { width: 100%; display: grid; grid-template-columns: 36px 64px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; }
+.trend:hover h3, .trend:focus-visible h3 { color: var(--basil); text-decoration: underline; text-underline-offset: 3px; }
+.trend .rank { font-family: var(--display); font-weight: 800; font-size: 1.4rem; color: var(--basil); text-align: right; }
+.trend img { width: 64px; height: 64px; border-radius: 6px; object-fit: cover; background: var(--basil-soft); display: block; }
+.trend h3 { margin: 0; font-family: var(--display); font-size: 1.08rem; }
+.trend small { display: block; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.trend .num { text-align: right; font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trend .num b { display: block; color: var(--ink); font-weight: 600; font-size: 14px; }
+.chg { display: inline-block; margin-top: 3px; padding: 1px 7px; border-radius: 999px; font-size: 12px; }
+.chg.up { background: var(--saffron-soft); color: var(--ink); }
+.chg.down { background: var(--line); color: var(--ink); }
+@media (max-width: 560px) { .trend { grid-template-columns: 26px 52px minmax(0, 1fr); } .trend img { width: 52px; height: 52px; } .trend .num { grid-column: 3; text-align: left; } .trend .num b { display: inline; margin-right: 8px; } }
 .stats { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line); border-radius: 4px; margin-top: 6px; }
 .stat { padding: 10px 16px; display: grid; gap: 2px; border-right: 1px solid var(--line); min-width: 0; }
 .stat:last-child { border-right: 0; }
@@ -216,7 +233,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
 :root.no-motion *, :root.no-motion *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 
 /* Mode switch */
-.mode { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.mode { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .mode button { border: 0; background: var(--paper); padding: 9px 10px; cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 15px; }
 .mode button + button { border-left: 1px solid var(--line); }
 .mode button[aria-pressed="true"] { background: var(--basil); color: var(--card); }
@@ -346,6 +363,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
           <button type="button" data-v="last">Last used</button>
           <button type="button" data-v="recipe">Recipe</button>
           <button type="button" data-v="plan">Athlete diet</button>
+          <button type="button" data-v="trending">Trending</button>
         </div>
       </div>
 
@@ -364,7 +382,10 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       <div class="mode" role="group" aria-label="What to make">
         <button type="button" id="mode-recipe" data-mode="recipe" aria-pressed="true">Recipe</button>
         <button type="button" id="mode-plan" data-mode="plan" aria-pressed="false">Athlete diet</button>
+        <button type="button" id="mode-trending" data-mode="trending" aria-pressed="false">Trending</button>
       </div>
+
+      <p class="trend-info" id="trend-info" hidden>The dishes the world is reading about most this week, ranked by English Wikipedia views and updated every day. Tap one to open its recipe.</p>
 
       <div class="fields" id="plan-fields" hidden>
         <div class="field">
@@ -486,7 +507,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
       </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="diet-field">
         <span class="legend" id="diet-label">Dietary needs</span>
         <div class="chips" id="diet" role="group" aria-labelledby="diet-label">
           <button type="button" class="chip" aria-pressed="false">Vegetarian</button>
@@ -637,7 +658,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
     checked: new Set()
   };
   let mode = "recipe";
-  let sample = null, canImages = false, ctl = null, photoFile = null;
+  let sample = null, canImages = false, ctl = null, photoFile = null, noClaude = false;
   const timers = new Map();
 
   // ---------- Units ----------
@@ -788,6 +809,7 @@ dialog.settings::backdrop { background: rgba(8, 12, 24, 0.5); }
 
   function render() {
     if (state.view === "plan") return renderPlan();
+    if (state.view === "trending") return renderTrending();
     const r = state.recipe, mult = state.servings / (r.servings || 1);
     card.replaceChildren();
     const top = el("div", "card-top");
@@ -1310,6 +1332,46 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     } catch { setStatus("Couldn't open that recipe. Try another one.", true); }
   }
 
+  // ---------- Trending (ranked daily by trending/update.mjs from Wikipedia page views) ----------
+  const TRENDING_URL = "https://ewantait813-svg.github.io/recipie-generator/trending.json";
+  let trending = null, trendingAll = false;
+  async function loadTrending() {
+    try { const res = await fetch(TRENDING_URL, { cache: "no-cache" }); if (!res.ok) throw 0; trending = await res.json(); }
+    catch { trending = { error: true }; }
+    if (state.view === "trending") renderTrending();
+  }
+  const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : String(n);
+  const fmtDay = d => new Date(d + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  function renderTrending() {
+    clearTimers(); card.replaceChildren();
+    const top = el("div", "card-top");
+    top.append(el("span", "flag", "Trending this week"), el("h2", null, "The world's most popular dishes right now"));
+    card.append(top);
+    if (!trending) { top.append(el("p", "desc", "Loading the latest rankings…")); loadTrending(); return; }
+    if (trending.error || !trending.dishes?.length) { top.append(el("p", "desc", "Couldn't load the rankings right now. Try again in a minute.")); const r = el("button", "btn-ghost", "Try again"); r.type = "button"; r.onclick = () => { trending = null; renderTrending(); }; top.append(r); return; }
+    const weekStart = new Date(trending.to + "T12:00:00Z"); weekStart.setUTCDate(weekStart.getUTCDate() - 6);
+    top.append(el("p", "desc", `Ranked by English Wikipedia views, ${fmtDay(weekStart.toISOString().slice(0, 10))}–${fmtDay(trending.to)}. Arrows compare with the week before. Updated daily.`));
+    const list = el("ol", "trend-list");
+    const shown = trendingAll ? trending.dishes : trending.dishes.slice(0, 20);
+    shown.forEach((d, i) => {
+      const li = el("li"), b = el("button", "trend"); b.type = "button";
+      b.setAttribute("aria-label", `${i + 1}. ${d.dish}, ${d.views7.toLocaleString()} views this week. Open the ${d.recipe} recipe.`);
+      const img = el("img"); img.src = d.thumb ? d.thumb + "/preview" : ""; img.alt = ""; img.loading = "lazy"; img.onerror = () => { img.style.visibility = "hidden"; };
+      const mid = el("div"); mid.append(el("h3", null, d.dish), el("small", null, "Recipe: " + d.recipe));
+      const num = el("div", "num"); num.append(el("b", null, fmtNum(d.views7) + " views"));
+      if (d.change != null && Math.abs(d.change) >= 1) { const c = el("span", "chg " + (d.change > 0 ? "up" : "down"), (d.change > 0 ? "▲ " : "▼ ") + Math.abs(d.change) + "%"); c.title = (d.change > 0 ? "Up " : "Down ") + Math.abs(d.change) + "% on the week before"; num.append(c); }
+      b.append(el("span", "rank", String(i + 1)), img, mid, num);
+      b.onclick = async () => { await openMeal({ idMeal: d.id }); setMode("recipe"); };
+      li.append(b); list.append(li);
+    });
+    card.append(list);
+    if (!trendingAll && trending.dishes.length > 20) {
+      const more = el("div", "card-actions"); more.style.padding = "0 28px 24px";
+      const m = el("button", "btn-ghost", `Show all ${trending.dishes.length}`); m.type = "button"; m.onclick = () => { trendingAll = true; renderTrending(); };
+      more.append(m); card.append(more);
+    }
+  }
+
   function develop() {
     if (!$("#dish").value.trim() && !$("#pantry").value.trim() && !photoFile) { setStatus("Name a dish, or list what you have.", true); $("#dish").focus(); return; }
     const prompt = CRAFT + "\n\nThe order:\n" + briefText() + "\n\n" + SCHEMA;
@@ -1408,8 +1470,12 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     $("#plan-fields").hidden = m !== "plan";
     $("#recipe-fields").hidden = m !== "recipe";
     $("#pantry-field").hidden = m !== "recipe";
+    $("#diet-field").hidden = m === "trending";
+    $("#trend-info").hidden = m !== "trending";
+    if (noClaude) $("#offline-note").hidden = m === "trending";
+    document.querySelector(".go").hidden = m === "trending";
     $("#make").textContent = m === "plan" ? "Build my diet plan" : "Find recipes";
-    if (m === "plan") setLink();
+    if (m !== "recipe") setLink();
     if (state.view !== m) { state.view = m; render(); }
     store.set("tk-mode", m);
   }
@@ -1427,11 +1493,11 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
   const linked = location.hash.match(/^#recipe=(\d+)$/);
   if (linked) { setMode("recipe"); openMeal({ idMeal: linked[1] }); }
-  else if (startMode === "plan") setMode("plan"); else render();
+  else if (startMode === "plan" || startMode === "trending") setMode(startMode); else render();
 
   (async () => {
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
-    if (!sample) { $("#offline-note").hidden = false; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
+    if (!sample) { noClaude = true; $("#offline-note").hidden = mode === "trending"; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
     $("#photo-row").hidden = !canImages;
     render();
