@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Test Kitchen · AI recipe developer</title>
+<title>Test Kitchen · Recipe finder</title>
 <meta name="description" content="Describe any dish and Claude develops a full recipe with weighed ingredients, doneness cues and timers. Or get a fueling plan built around your sport.">
 <meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1522" media="(prefers-color-scheme: dark)">
@@ -16,6 +16,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Test Kitchen: search real recipes, scale servings, switch units and cook along with step timers.">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a68'/%3E%3Cpath d='M9 25V14a7 7 0 0 1 14 0v11z' fill='%23fdfdfa'/%3E%3Crect x='9' y='21' width='14' height='2.5' fill='%23e8735a'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -1334,7 +1336,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   }
 
   // ---------- Trending (ranked daily by trending/update.mjs from Wikipedia page views) ----------
-  const TRENDING_URL = "https://ewantait813-svg.github.io/recipie-generator/trending.json";
+  const TRENDING_URL = /github\.io$|^localhost$/.test(location.hostname) ? "trending.json" : "https://ewantait813-svg.github.io/recipie-generator/trending.json";
   let trending = null, trendingAll = false;
   async function loadTrending() {
     try { const res = await fetch(TRENDING_URL, { cache: "no-cache" }); if (!res.ok) throw 0; trending = await res.json(); }
@@ -1501,6 +1503,9 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   else if (startMode === "plan" || startMode === "trending") setMode(startMode); else render();
 
   (async () => {
+    if ("serviceWorker" in navigator && !window.claude && window.top === window && (location.protocol === "https:" || location.hostname === "localhost")) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
     try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
     if (!sample) { noClaude = true; setMode(mode); $("#offline-note").hidden = mode === "trending"; document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); render(); return; }
     try { const lim = await sample.limits(); canImages = !!lim?.images; } catch { canImages = false; }
