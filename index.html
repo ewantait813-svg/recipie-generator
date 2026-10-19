@@ -132,6 +132,7 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .results { padding: 24px 28px 28px; display: grid; gap: 16px; }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
 .result { display: grid; gap: 8px; border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 0 0 12px; cursor: pointer; text-align: left; overflow: hidden; font-family: var(--display); font-weight: 600; font-size: 15px; line-height: 1.25; }
+.result small.fit { color: var(--basil, inherit); font-weight: 600; }
 .result img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--basil-soft); }
 .result span { padding: 0 12px; }
 .result small { display: block; padding: 0 12px; font-family: var(--mono); font-weight: 400; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -1561,6 +1562,60 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     return d && noAlcohol(d) ? fromDrink(d) : null;
   }
 
+  // ---------- Fridge search: every ingredient you list counts, like SuperCook ----------
+  // Each item is matched to TheMealDB's ingredient names, every match is searched, and recipes are ranked by how many
+  // of your items they use, then by how few other ingredients you'd need to buy. "no fish" leaves out recipes with fish.
+  const STAPLES = /^(salt|sea salt|pepper|black pepper|water|cold water|hot water|boiling water|oil|olive oil|extra virgin olive oil|vegetable oil|sunflower oil|sugar|caster sugar|flour|plain flour|ice|ice cubes)$/i;
+  const stemWord = w => w.replace(/ies$/, "y").replace(/(oes|ches|shes|sses)$/, m => m.slice(0, -2)).replace(/([^s])s$/, "$1");
+  const stemAll = t => t.toLowerCase().replace(/[^a-z ]+/g, " ").split(/\s+/).filter(Boolean).map(stemWord).join(" ");
+  function pantryItems(text) {
+    const have = [], avoid = [];
+    text.split(/[,;\n]|\band\b/i).forEach(raw => {
+      let t = raw.toLowerCase().replace(/[\d½¼¾⅓⅔.\/]+\s*(g|kg|ml|l|cups?|tbsp|tsp|oz|lbs?|pounds?|grams?)?\b/g, " ")
+        .replace(/\b(a|an|some|half|bag|bags|box|can|cans|tin|tins|jar|of|the|fresh|frozen|leftover|leftovers|chopped|sliced|diced|cooked|raw|big|small|large|little|bit|few|handful|pack|packet|bunch|my|i|have|got)\b/g, " ").replace(/\s+/g, " ").trim();
+      const no = t.match(/^(no|without|not|nothing)\s+(.+)/);
+      if (no) { if (!/oven|stove|microwave|blender|time|grill|hob/.test(no[2])) avoid.push(stemAll(no[2])); return; }
+      if (t.length >= 2 && !/oven|stove|microwave|blender|grill|hob|pan|pot/.test(t)) have.push({ text: t, stem: stemAll(t) });
+    });
+    return { have: have.slice(0, 10), avoid };
+  }
+  let ingredientList = null;
+  async function fridgeMeals(fridge, signal) {
+    ingredientList ||= mealdb("list.php?i=list").then(l => l.map(x => x.strIngredient).filter(Boolean)).catch(() => { ingredientList = null; return []; });
+    const names = await ingredientList;
+    // Up to 3 library ingredients per item: an exact name first ("chicken" → Chicken), then names containing it (Chicken Breast).
+    const lookups = fridge.have.map(h => {
+      const exact = names.filter(n => stemAll(n) === h.stem);
+      const within = names.filter(n => stemAll(n) !== h.stem && (" " + stemAll(n) + " ").includes(" " + h.stem + " ")).sort((a, b) => a.length - b.length);
+      const picks = [...exact, ...within].slice(0, 3);
+      return picks.length ? picks : [h.text];
+    });
+    const lists = await Promise.all(lookups.map(ns => Promise.all(ns.map(n => mealdb("filter.php?i=" + encodeURIComponent(n.replace(/\s+/g, "_")), signal).catch(() => [])))));
+    const byId = new Map();
+    lists.forEach(perItem => {
+      const seen = new Set();
+      perItem.flat().forEach(m => { if (seen.has(m.idMeal)) return; seen.add(m.idMeal); const x = byId.get(m.idMeal) || { ...m, hits: 0 }; x.hits++; byId.set(m.idMeal, x); });
+    });
+    // Own drinks join when they use at least 2 of your items (banana + milk → a shake).
+    OWN_DRINKS.forEach(d => { const ings = Object.keys(d).filter(k => /^strIngredient\d+$/.test(k)).map(k => stemAll(d[k] || "")); const hits = fridge.have.filter(h => ings.some(i => (" " + i + " ").includes(" " + h.stem + " "))).length; if (hits >= 2) byId.set(d.idMeal, { ...d, hits }); });
+    return [...byId.values()].sort((a, b) => b.hits - a.hits || a.strMeal.localeCompare(b.strMeal));
+  }
+  async function rankByFridge(meals, fridge, signal) {
+    // Look up the best candidates in full to count what you'd still need to buy.
+    const top = meals.slice(0, 30);
+    const full = await Promise.all(top.map(m => m.strInstructions ? m : mealdb("lookup.php?i=" + m.idMeal, signal).then(r => r[0] ? { ...r[0], hits: m.hits } : m).catch(() => m)));
+    const ranked = full.map(m => {
+      const ings = [];
+      for (let i = 1; i <= 20; i++) { const n = (m["strIngredient" + i] || "").trim(); if (n) ings.push(n); }
+      if (!ings.length) return m;
+      if (fridge.avoid.some(a => ings.some(n => (" " + stemAll(n) + " ").includes(" " + a + " ")))) return null;
+      const mine = n => fridge.have.some(h => { const s = " " + stemAll(n) + " "; return s.includes(" " + h.stem + " ") || (" " + h.stem + " ").includes(s); });
+      const used = fridge.have.filter(h => ings.some(n => { const s = " " + stemAll(n) + " "; return s.includes(" " + h.stem + " ") || (" " + h.stem + " ").includes(s); })).length, need = ings.filter(n => !mine(n) && !STAPLES.test(n.trim()));
+      return { ...m, fit: { used: Math.max(used, 1), need: [...new Set(need.map(n => n.toLowerCase()))] } };
+    }).filter(Boolean);
+    return ranked.sort((a, b) => (b.fit?.used || 0) - (a.fit?.used || 0) || (a.fit?.need.length ?? 99) - (b.fit?.need.length ?? 99));
+  }
+
   async function findRecipes() {
     const dish = $("#dish").value.trim(), pantry = $("#pantry").value.trim();
     const diets = [...document.querySelectorAll("#diet .chip[aria-pressed='true']")].map(b => b.textContent);
@@ -1569,7 +1624,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     let handedOff = false;
     busy(true); setStatus(""); cooking("Searching for " + (dish || "recipes with " + pantry.split(/[,\n]/)[0].trim()), ["Searching the recipe library", "Checking matches"]);
     try {
-      let meals = [], exact = false;
+      let meals = [], exact = false, fridge = null;
       if (dish) {
         const norm = t => t.toLowerCase().replace(/[^a-z0-9à-ÿ]+/g, " ").trim();
         const [food, group, drinks] = await Promise.all([get("search.php?s=" + encodeURIComponent(dish)), groupMeals(dish, sig), findDrinks(dish, sig).catch(() => [])]);
@@ -1595,8 +1650,9 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
           }
         }
       } else {
-        const first = pantry.split(/[,\n]/)[0].replace(/[\d½¼¾⅓.]+\s*(g|kg|ml|cups?|tbsp|tsp|oz|lbs?)?\b/gi, "").replace(/\b(a|an|some|half|bag|of|the)\b/gi, "").trim();
-        meals = await get("filter.php?i=" + encodeURIComponent(first.replace(/\s+/g, "_")));
+        fridge = pantryItems(pantry);
+        if (!fridge.have.length) { render(); setStatus("List a few ingredients, like \"chicken, rice, spinach\".", true); return; }
+        meals = await fridgeMeals(fridge, sig);
       }
       const veg = diets.includes("Vegan") ? "Vegan" : diets.includes("Vegetarian") ? "Vegetarian" : "";
       if (veg && meals.length) {
@@ -1604,11 +1660,12 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
         const ok = meals.some(m => !m.drink) ? new Set((await get("filter.php?c=" + veg)).map(m => m.idMeal)) : new Set();
         meals = meals.filter(m => m.drink === "own" ? veg === "Vegetarian" || m.diet === "vegan" : m.drink ? veg === "Vegetarian" : ok.has(m.idMeal));
       }
+      if (fridge) meals = await rankByFridge(meals, fridge, sig);
       const other = diets.filter(d => d !== "Vegan" && d !== "Vegetarian");
       if (exact && meals.length === 1 && !other.length) { busy(false); handedOff = true; await openMeal(meals[0]); return; }
       const max = meals.some(m => m.drink) ? 100 : 24;
-      showResults(dish || pantry, meals.slice(0, max), other);
-      setStatus(meals.length ? `Found ${meals.length > max ? max + "+" : meals.length} recipe${meals.length === 1 ? "" : "s"}. Pick one to open it.` : "");
+      showResults(dish || pantry, meals.slice(0, max), other, false, fridge && (meals.length ? "Recipes from what you have" : "Nothing found with what you have"));
+      setStatus(meals.length ? `Found ${meals.length > max ? max + "+" : meals.length} recipe${meals.length === 1 ? "" : "s"}. ${fridge ? "The ones that use the most of what you have come first." : "Pick one to open it."}` : "");
     } catch (e) {
       render();
       if (sig.aborted) { setStatus("Stopped."); return; }
@@ -1646,10 +1703,10 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     d.append(chips); return d;
   }
 
-  function showResults(query, meals, otherDiets, isBrowse) {
+  function showResults(query, meals, otherDiets, isBrowse, title) {
     clearTimers(); setLink(); card.replaceChildren();
     const top = el("div", "card-top");
-    top.append(el("span", "flag", "From the web"), el("h2", null, isBrowse ? query + " recipes" : meals.length ? "Recipes for “" + query + "”" : "Nothing found for “" + query + "”"));
+    top.append(el("span", "flag", "From the web"), el("h2", null, title || isBrowse ? title || query + " recipes" : meals.length ? "Recipes for “" + query + "”" : "Nothing found for “" + query + "”"));
     if (otherDiets.length) top.append(el("p", "desc", otherDiets.join(", ") + " can't be filtered automatically for web recipes. Check the ingredients before you cook."));
     card.append(top);
     const sec = el("section", "results");
@@ -1659,7 +1716,12 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
       const b = el("button", "result"); b.type = "button";
       const img = el("img"); img.src = (m.strMealThumb || "") + (/^https?:/.test(m.strMealThumb || "") ? "/preview" : ""); img.alt = ""; img.loading = "lazy";
       b.append(img, el("span", null, m.strMeal));
-      if (m.strArea || m.strCategory) b.append(el("small", null, [m.strArea, m.strCategory].filter(x => x && x !== "Unknown").join(" · ")));
+      if (m.fit) {
+        const f = m.fit, s = el("small", "fit", f.need.length ? `Uses ${f.used} of yours · ${f.need.length} more to buy` : `Uses ${f.used} of yours · you have everything`);
+        if (f.need.length) s.title = "Still need: " + f.need.join(", ");
+        b.append(s);
+        if (f.need.length) b.append(el("small", null, "Need: " + f.need.slice(0, 3).join(", ") + (f.need.length > 3 ? "…" : "")));
+      } else if (m.strArea || m.strCategory) b.append(el("small", null, [m.strArea, m.strCategory].filter(x => x && x !== "Unknown").join(" · ")));
       b.onclick = () => openMeal(m);
       grid.append(b);
     });

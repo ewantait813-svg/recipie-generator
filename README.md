@@ -15,7 +15,8 @@ Search for any dish and get a real recipe from the web, with photos, the origina
 
 ## What it does
 
-- **Search** by dish name ("lasagne"), category or cuisine ("pasta", "desserts", "Thai food"), or an ingredient you have, and filter for vegetarian or vegan. An exact name opens the recipe straight away.
+- **Search** by dish name ("lasagne"), category or cuisine ("pasta", "desserts", "Thai food"), and filter for vegetarian or vegan. An exact name opens the recipe straight away.
+- **Use what I have:** list everything in your fridge ("chicken, rice, onion, no mushrooms") and recipes are ranked by how many of your ingredients they use, with what you'd still need to buy shown on each one. An exact name opens the recipe straight away.
 - **Drinks:** search "smoothie", "protein shake" or "lemonade", or tap **Drinks** or **Protein shakes** under Browse. Non-alcoholic drinks come from [TheCocktailDB](https://www.thecocktaildb.com) (alcoholic drinks are always filtered out), plus Test Kitchen's own protein shakes, protein smoothies, sports drinks and everyday drinks with protein and calories per serving.
 - **Recipes** rescale when you change the servings, switch between US and metric units, and have tap-to-start timers on the steps.
 - **Cook mode** shows one big step at a time with back/next buttons, swipe and arrow keys, the step's timer, an ingredients checklist, and keeps your screen awake.
