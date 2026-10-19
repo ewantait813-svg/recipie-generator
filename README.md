@@ -16,6 +16,7 @@ Search for any dish and get a real recipe from the web, with photos, the origina
 ## What it does
 
 - **Search** by dish name ("lasagne"), category or cuisine ("pasta", "desserts", "Thai food"), or an ingredient you have, and filter for vegetarian or vegan. An exact name opens the recipe straight away.
+- **Drinks:** search "smoothie", "protein shake" or "lemonade", or tap **Drinks** or **Protein shakes** under Browse. Non-alcoholic drinks come from [TheCocktailDB](https://www.thecocktaildb.com) (alcoholic drinks are always filtered out), plus Test Kitchen's own protein shakes, protein smoothies, sports drinks and everyday drinks with protein and calories per serving.
 - **Recipes** rescale when you change the servings, switch between US and metric units, and have tap-to-start timers on the steps.
 - **Cook mode** shows one big step at a time with back/next buttons, swipe and arrow keys, the step's timer, an ingredients checklist, and keeps your screen awake.
 - **Ask Chef Pip** under every recipe answers questions about it: swaps, timing, leftovers, making it vegetarian. Pip uses Chrome's built-in AI on computers that have it, [Puter](https://docs.puter.com/user-pays-model/) on phones and other browsers (free, with a Puter sign-in the first time), and Claude on claude.ai.
@@ -27,7 +28,7 @@ Search for any dish and get a real recipe from the web, with photos, the origina
 
 ## How it works
 
-`index.html` is a single self-contained page. Recipe search calls TheMealDB's free public API straight from the browser, so it works anywhere, including GitHub Pages.
+`index.html` is a single self-contained page. Recipe search calls the free public APIs of TheMealDB and TheCocktailDB straight from the browser, so it works anywhere, including GitHub Pages.
 
 Athlete diet plans and full recipe rewrites ("Adjust this recipe") ask Claude through the claude.ai Artifact runtime (`window.claude.use("sample")`), so they need the claude.ai version. On GitHub Pages the plan button links there, each example meal finds a web recipe instead, and "Adjust this recipe" asks Chef Pip to explain the changes. On claude.ai, if the recipe library can't be reached, Claude develops the recipe instead.
 
