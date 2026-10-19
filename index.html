@@ -1543,6 +1543,82 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     if (one) return { qty: n, unit: one, note: rest };
     return { qty: n, unit: "whole", note: [u, rest].filter(Boolean).join(" ") };
   }
+  // ---------- Nutrition estimate for web recipes (rough, from the ingredient amounts) ----------
+  // Per 100 g: [match, kcal, protein, carbs, fat, grams per piece]. More specific names come first. Zeros are seasonings
+  // that don't add meaningfully. Shown only when nearly every ingredient is recognised with an amount.
+  const NUTR = [
+    [/\b(salt|black pepper|white pepper|ground pepper|ground clove|sazon|pepper ?corns?|^pepper$|paprika|cumin|cinnamon|turmeric|nutmeg|allspice|cardamom|cardomom|cloves$|^clove$|star anise|saffron|garam masala|curry powder|chil[il]i? powder|chil[il]i flakes|red pepper flakes|cayenne|oregano|thyme|rosemary|sage|bay lea|marjoram|mint|basil|parsley|coriander|cilantro|dill|chives|seeds?$|caraway|vanilla|extract|essence|blossom water|rose water|baking powder|baking soda|bicarbonate|yeast|water$|^ice|stock cubes?|bouillon|vinegar|lemongrass|galangal|garlic powder|onion powder|onion salt|celery salt|seasoning|food colou?ring|gelatine|harissa|five spice|zest|tarragon|lemon grass|kaffir|lime leaves|curry leaves|sumac|za.atar|fenugreek|asafoetida|mixed spice|spice|herbs)/, 0, 0, 0, 0, 1],
+    [/(olive|vegetable|sunflower|rapeseed|canola|peanut|groundnut|ground nut|sesame|coconut|corn|frying)? ?oil\b|^lard|^ghee|shortening|dripping|^suet/, 890, 0, 0, 99, 14],
+    [/peanut butter/, 588, 25, 20, 50, 16],
+    [/unsalted butter|salted butter|^butter(?! ?beans)|melted butter/, 717, 1, 0, 81, 14],
+    [/condensed milk/, 321, 8, 54, 9, 0], [/coconut cream/, 330, 3, 7, 35, 0], [/coconut milk/, 197, 2, 3, 21, 0],
+    [/milk chocolate/, 535, 8, 59, 30, 0], [/chocolate chips/, 480, 4, 64, 24, 0, 0.7], [/chocolate/, 546, 5, 61, 31, 0, 0.7], [/cocoa/, 228, 20, 58, 14, 0, 0.45],
+    [/buttermilk|milk/, 64, 3.3, 4.8, 3.6, 0],
+    [/double cream|heavy cream|whipping cream|clotted cream/, 345, 2, 3, 36, 0], [/single cream|light cream/, 193, 3, 4, 19, 0],
+    [/sour cream/, 193, 2, 5, 19, 0], [/cr[eè]me fra[iî]che/, 290, 2, 3, 30, 0], [/ice cream/, 207, 4, 24, 11, 0], [/custard/, 120, 3, 17, 4, 0], [/cream cheese/, 342, 6, 4, 34, 0], [/cream/, 340, 2, 3, 36, 0],
+    [/greek yog/, 97, 9, 4, 5, 0], [/yog/, 61, 3.5, 4.7, 3.3, 0],
+    [/parmesan|parmigiano|pecorino|grana/, 431, 38, 4, 29, 0, 0.4], [/mozzarella/, 280, 28, 3, 17, 125, 0.45], [/feta/, 264, 14, 4, 21, 0, 0.6], [/mascarpone/, 429, 5, 4, 44, 0], [/ricotta/, 174, 11, 3, 13, 0], [/halloumi|paneer/, 320, 21, 2, 25, 0], [/goat.?s? cheese/, 364, 22, 0, 30, 0], [/cheese|cheddar|gruy[eè]re|emmental|monterey|brie|stilton|gouda|colby/, 400, 25, 1, 33, 20, 0.45],
+    [/egg yolks?/, 322, 16, 4, 27, 17], [/egg whites?/, 52, 11, 1, 0, 33], [/\beggs?\b/, 143, 13, 1, 10, 50],
+    [/icing sugar|powdered sugar|caster sugar|brown sugar|muscovado|demerara|granulated sugar|palm sugar|vanilla sugar|jaggery|^sugar|soft sugar/, 390, 0, 100, 0, 4, 0.85],
+    [/honey/, 304, 0, 82, 0, 21, 1.4], [/golden syrup|treacle|molasses|maple syrup|corn syrup|agave|syrup/, 300, 0, 78, 0, 20, 1.35], [/dulce de leche/, 315, 7, 55, 7, 0], [/jam|marmalade|preserve/, 250, 0, 65, 0, 20],
+    [/cornstarch|corn ?flour|cornflour|starch|tapioca|arrowroot/, 381, 0, 91, 0, 8, 0.55], [/rice flour/, 366, 6, 80, 1, 0, 0.6], [/semolina|polenta|cornmeal/, 360, 10, 75, 2, 0, 0.7],
+    [/flour/, 364, 10, 76, 1, 8, 0.55], [/breadcrumbs|panko/, 395, 13, 72, 5, 0, 0.45], [/oats|oatmeal/, 389, 17, 66, 7, 0, 0.4], [/couscous|bulgur/, 360, 12, 75, 1, 0, 0.75],
+    [/puff pastry/, 558, 7, 46, 38, 320], [/shortcrust|pie crust|pastry/, 527, 7, 54, 32, 320], [/filo|phyllo/, 299, 7, 61, 3, 20],
+    [/rice noodles|noodles|vermicelli|udon/, 360, 7, 80, 1, 0, 0.4], [/spaghetti|pasta|macaroni|penne|linguine|fettuccine|tagliatelle|lasagne|lasagna|fusilli|rigatoni|orzo|farfalle/, 371, 13, 75, 1.5, 0, 0.45], [/rice/, 360, 7, 79, 1, 0, 0.8],
+    [/digestive|biscuits|cookies|graham/, 480, 7, 65, 21, 15], [/tortillas?|wraps?/, 300, 8, 50, 7, 45], [/pitt?a/, 275, 9, 55, 1, 60], [/naan/, 300, 9, 50, 7, 90], [/baguette/, 270, 9, 55, 3, 250], [/bread|brioche|buns?\b|rolls?\b|croissant|ciabatta|bagel/, 265, 9, 49, 3, 40],
+    [/mayonnaise|mayo/, 680, 1, 1, 75, 14], [/tahini/, 595, 17, 21, 54, 15],
+    [/almond|walnut|peanut|cashew|pine nut|pistachio|pecan|hazelnut|macadamia|nuts\b/, 600, 20, 18, 52, 0, 0.6], [/desiccated coconut|coconut flakes|^coconut$|shredded coconut/, 660, 7, 24, 65, 0, 0.35], [/sesame/, 573, 18, 23, 50, 0],
+    [/chickpeas|kidney beans|black beans|cannellini|butter beans|borlotti|pinto|haricot|baked beans|broad beans|white beans/, 120, 8, 20, 1, 0, 0.7], [/lentils|split peas/, 352, 25, 63, 1, 0, 0.8], [/tofu/, 76, 8, 2, 5, 0], [/soya bean|edamame/, 147, 13, 10, 7, 0],
+    [/bacon|pancetta|lardons/, 470, 33, 1, 37, 25], [/chorizo|salami|pepperoni/, 455, 24, 2, 38, 0], [/sausage/, 300, 12, 3, 27, 65], [/ham\b|prosciutto/, 145, 21, 1, 6, 30], [/black pudding/, 300, 10, 20, 20, 0], [/corned beef/, 250, 25, 0, 15, 0],
+    [/chicken breast/, 165, 31, 0, 4, 170], [/chicken thigh/, 209, 26, 0, 11, 110], [/chicken (leg|drumstick)/, 190, 26, 0, 9, 200], [/chicken wing/, 203, 30, 0, 8, 35], [/^chicken$|whole chicken/, 190, 27, 0, 9, 1400], [/chicken/, 190, 27, 0, 9, 150],
+    [/turkey/, 135, 30, 0, 1, 0], [/duck/, 337, 19, 0, 28, 200],
+    [/stock|broth/, 6, 1, 0, 0.2, 0],
+    [/beef|steak|veal|venison|oxtail|mince/, 250, 26, 0, 15, 200], [/pork|gammon/, 242, 27, 0, 14, 180], [/lamb|mutton|goat/, 282, 25, 0, 20, 180],
+    [/salmon|trout/, 208, 20, 0, 13, 150], [/tuna/, 132, 28, 0, 1, 150], [/mackerel|sardine|anchov|herring/, 205, 19, 0, 14, 100], [/prawns|shrimp|lobster|crab|langoustine/, 99, 24, 0, 0.5, 15], [/squid|octopus|calamari/, 92, 16, 3, 1, 0], [/mussels|clams|oysters|scallops|cockles/, 86, 12, 4, 2, 0], [/cod|haddock|white fish|fish fillet|hake|pollock|sea bass|tilapia|monkfish|bream|halibut|plaice|sole|fish/, 82, 18, 0, 1, 150],
+    [/tomato (puree|paste)/, 82, 4, 19, 0, 15], [/ketchup/, 112, 1, 26, 0, 15], [/passata|tinned tomato|chopped tomatoes|plum tomatoes|diced tomatoes|canned tomato|tomato sauce/, 30, 1, 5, 0, 400], [/cherry tomato/, 18, 1, 4, 0, 15], [/tomato/, 18, 1, 4, 0, 120],
+    [/soy sauce|tamari/, 53, 8, 5, 0, 0], [/fish sauce/, 35, 5, 4, 0, 0], [/oyster sauce|hoisin|teriyaki/, 150, 2, 30, 0, 0], [/worcestershire|hot ?sauce|tabasco|sriracha/, 60, 1, 13, 0, 0], [/sweet chil[il]i sauce/, 230, 0, 55, 0, 0], [/curry paste|chil[il]i paste|pepper paste|tamarind|miso|gochujang/, 140, 4, 15, 7, 0], [/mustard/, 66, 4, 6, 3, 0], [/pesto/, 450, 5, 6, 45, 0], [/chimichurri/, 300, 1, 3, 32, 0],
+    [/white wine|red wine|wine|sherry|mirin|sake|port\b/, 100, 0, 4, 0, 0], [/beer|ale|stout|cider/, 43, 0, 4, 0, 0], [/brandy|rum|vodka|whisk|gin\b|cognac|liqueur|kirsch|amaretto/, 231, 0, 0, 0, 0],
+    [/orange juice|apple juice|juice/, 45, 1, 10, 0, 0],
+    [/sweet potato/, 86, 1.6, 20, 0, 130], [/potato/, 77, 2, 17, 0, 170], [/carrot/, 41, 1, 10, 0, 60], [/spring onion|scallion|green onion/, 32, 2, 7, 0, 15], [/shallot|challot/, 72, 2, 17, 0, 30], [/onion/, 40, 1, 9, 0, 150], [/garlic/, 149, 6, 33, 0, 5], [/ginger/, 80, 2, 18, 1, 15],
+    [/scotch bonnet|jalape|chil[il]i|bird.?s.?eye/, 40, 2, 9, 0, 10], [/pepper/, 31, 1, 6, 0, 150],
+    [/mushroom/, 22, 3, 3, 0, 15, 0.3], [/celeriac/, 42, 1.5, 9, 0, 600], [/celery/, 16, 1, 3, 0, 40], [/leek/, 61, 1.5, 14, 0, 200], [/cabbage|sauerkraut|pak choi|bok choy/, 25, 1, 6, 0, 800], [/spinach|chard|watercress|rocket|arugula/, 23, 3, 4, 0, 0, 0.15], [/kale/, 49, 4, 9, 1, 0, 0.3], [/broccoli/, 34, 3, 7, 0, 300], [/cauliflower/, 25, 2, 5, 0, 600], [/aubergine|eggplant|egg plant/, 25, 1, 6, 0, 300], [/courgette|zucchini/, 17, 1, 3, 0, 200], [/cucumber|gherkin|pickle/, 15, 1, 4, 0, 300], [/lettuce|salad leaves|endive/, 15, 1, 3, 0, 300],
+    [/green beans|runner beans|asparagus|mangetout|sugar snap|okra/, 31, 2, 7, 0, 15], [/peas/, 81, 5, 14, 0, 0, 0.6], [/sweetcorn|corn on the cob|^corn/, 86, 3, 19, 1, 150], [/avocado/, 160, 2, 9, 15, 150], [/pumpkin|squash/, 45, 1, 12, 0, 1000], [/beetroot|swede|turnip|parsnip|radish/, 43, 1.5, 10, 0, 120], [/fennel/, 31, 1, 7, 0, 250], [/olives/, 145, 1, 4, 15, 4], [/capers/, 23, 2, 5, 0, 0], [/bean sprouts/, 30, 3, 6, 0, 0], [/breadfruit|plantain|cassava|yam/, 120, 1, 30, 0, 300],
+    [/lemon juice|lime juice/, 22, 0, 7, 0, 0], [/lemon|lime/, 29, 1, 9, 0, 60], [/orange/, 47, 1, 12, 0, 130], [/apple/, 52, 0, 14, 0, 180], [/banana/, 89, 1, 23, 0, 120], [/mango/, 60, 1, 15, 0, 300], [/pineapple/, 50, 1, 13, 0, 900], [/pear|peach|plum|nectarine|apricot$|apricots$|cherries|grapes|kiwi|melon|papaya|figs?/, 50, 1, 12, 0, 120], [/strawberr|raspberr|blackberr|blueberr|berries|cranberr|redcurrant/, 40, 1, 10, 0, 0, 0.6],
+    [/hummus/, 166, 8, 14, 10, 0], [/marshmallow|meringue/, 330, 2, 80, 0, 7], [/pretzels/, 380, 10, 80, 3, 0], [/goose fat|duck fat/, 900, 0, 0, 100, 14], [/buckwheat|quinoa|barley|millet/, 350, 13, 70, 3, 0], [/rhubarb/, 21, 1, 5, 0, 100], [/water chestnut|bamboo shoot/, 50, 1, 11, 0, 0], [/christmas pudding|fruit mix|mincemeat/, 330, 3, 60, 9, 0], [/grand marnier/, 310, 0, 25, 0, 0], [/cacao/, 228, 20, 58, 14, 0],
+    [/raisins|sultanas|currants|dried fruit|dried apricots|prunes|dates|dried cranberr|mixed peel|glac[eé] cherr/, 300, 3, 75, 0, 0, 0.65]
+  ];
+  const nutrOf = name => { const n = name.toLowerCase().trim(); return NUTR.find(([re]) => re.test(n)); };
+  const PIECE_G = { clove: 5, slice: 30, can: 400, tin: 400, sprig: 1, bunch: 30, leaf: 0.5, stalk: 40, fillet: 150, rasher: 25, sheet: 20, pack: 250, packet: 100, jar: 300, bag: 200, knob: 15, cube: 10, pod: 1, handful: 30, pot: 150, tub: 250, strip: 10, cm: 5, inch: 12, drop: 0.05, glass: 200, bottle: 500, carton: 500, block: 250, ball: 125, pinch: 0.4, dash: 1, scoop: 30, head: 500, bulb: 250, stick: 5, piece: 0, egg: 50 };
+  function gramsOf(it, row) {
+    const q = Number(it.qty), u = it.unit || "", name = it.item.toLowerCase();
+    if (!row) return null;
+    if (u === "g") return q;
+    // Cups and spoons are volumes; dry and leafy things weigh less than water (row[6]), oil a little less.
+    const d = row[6] || (row[4] > 90 ? 0.92 : 1);
+    if (u === "ml") return q * d;
+    if (u === "tsp") return q * 5 * d;
+    if (u === "tbsp") return q * 15 * d;
+    if (u === "whole" || u === "piece") return row[5] ? q * (q > 2 && row[5] >= 500 ? 150 : row[5]) : null;   // "5 chicken" means pieces, not 5 birds
+    if (u === "stick" && /butter/.test(name)) return q * 113;
+    if (u === "head" && /garlic/.test(name)) return q * 50;
+    if (u === "bulb" && /garlic/.test(name)) return q * 50;
+    if (u === "slice" && row && row[5] && row[5] < 60) return q * row[5];
+    return PIECE_G[u] != null ? q * PIECE_G[u] : null;
+  }
+  function estimateNutrition(items) {
+    let kcal = 0, p = 0, c = 0, f = 0, known = 0, total = 0;
+    for (const it of items) {
+      // Seasonings, and extras with no amount ("oil for frying", "lime to serve"), don't count either way.
+      const row = nutrOf(it.item); if ((row && !row[1]) || it.qty == null || isNaN(it.qty)) continue;
+      total++;
+      let g = row ? gramsOf(it, row) : null; if (g == null) continue;
+      if (row[4] > 90 && g > 150) g *= 0.15;   // a pan of frying oil: only a little ends up in the food
+      known++; kcal += g * row[1] / 100; p += g * row[2] / 100; c += g * row[3] / 100; f += g * row[4] / 100;
+    }
+    if (!total || known / total < 0.85 || total - known > 2) return null;
+    // Whole-recipe totals; the page divides by the servings, which are only a guess for web recipes.
+    return kcal >= 40 && kcal <= 25000 ? { calories: kcal, protein_g: p, carbs_g: c, fat_g: f } : null;
+  }
   function fromMeal(m) {
     const items = [];
     for (let i = 1; i <= 20; i++) {
@@ -1559,13 +1635,17 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     }
     const steps = paras.map(t => { const mm = t.match(/(\d+)(?:\s*(?:-|to|–)\s*\d+)?\s*min/i); return { title: "", text: t, minutes: mm ? Math.min(Number(mm[1]), 240) : null, temp_c: null }; });
     const tags = String(m.strTags || "").split(",").map(t => t.trim()).filter(Boolean);
+    const servings = m.servings || (m.drink ? 1 : 4), est = !m.nutrition && estimateNutrition(items);
+    const r1 = x => Math.round(x / 10) * 10;
     return {
       title: m.strMeal, cuisine: m.drink === "own" ? "Test Kitchen drink" : m.drink ? "Drink" : [m.strArea, m.strCategory].filter(x => x && x !== "Unknown").join(" · ") || "From the web",
       description: m.drink === "own" ? m.strCategory + ". " + (m.diet === "vegan" ? "Vegan. " : "") + "About " + m.nutrition.protein_g + " g protein per serving."
         : m.tags?.length ? m.tags.join(", ").replace(/^./, c => c.toUpperCase()) + "." : tags.length ? "Tagged: " + tags.join(", ") + "." : "",
-      servings: m.servings || (m.drink ? 1 : 4), prep_min: null, cook_min: null, difficulty: null, equipment: [],
+      servings, prep_min: null, cook_min: null, difficulty: null, equipment: [],
       ingredient_groups: [{ name: "", items }], steps, tips: m.drink === "own" ? m.tips : [m.drink ? "Drinks from the web usually make one glass." : "Servings are an estimate: recipes from the web don't always say how many they serve."],
-      nutrition: m.nutrition, nutrition_note: m.nutrition && "Rough estimate from typical ingredient labels, not a nutrition label.",
+      nutrition: m.nutrition || (est && { calories: est.calories / servings, protein_g: est.protein_g / servings, carbs_g: est.carbs_g / servings, fat_g: est.fat_g / servings }),
+      nutrition_note: m.nutrition ? "Rough estimate from typical ingredient labels, not a nutrition label."
+        : est && `Rough estimate from the ingredient amounts, not a nutrition label. ${m.drink ? "Assumes it makes " + servings + " glass" + (servings === 1 ? "" : "es") : "Web recipes don't say how many they serve, so this assumes " + servings} · whole recipe about ${r1(est.calories).toLocaleString()} kcal and ${Math.round(est.protein_g)} g protein.`,
       image: m.strMealThumb || "", source_url: m.strSource || "", video_url: m.strYoutube || "", web: m.idMeal, drink: m.drink || ""
     };
   }
