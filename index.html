@@ -117,6 +117,11 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .saved ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .saved li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .saved li button.open { border: 0; background: none; text-align: left; cursor: pointer; padding: 2px 0; font-family: var(--display); font-size: 15px; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.shop h4 { margin: 8px 0 2px; font-family: var(--mono); font-size: 11.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.shop label { display: flex; gap: 8px; align-items: baseline; flex: 1; min-width: 0; font-size: 15px; cursor: pointer; overflow-wrap: anywhere; }
+.shop label.done span { text-decoration: line-through; color: var(--muted); }
+.shop-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.shop-actions button { padding: 6px 10px; font-size: 13px; }
 .saved li button.del { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
 .empty-note { color: var(--muted); font-size: 14px; margin: 0; }
 
@@ -607,6 +612,16 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
         <ul id="saved-list"></ul>
         <p class="empty-note" id="saved-empty">Recipes you save appear here, in this browser.</p>
       </div>
+
+      <div class="saved shop" id="shop" hidden>
+        <span class="legend" id="shop-title">Shopping list</span>
+        <div id="shop-list"></div>
+        <div class="shop-actions">
+          <button type="button" class="btn-ghost" id="shop-copy">Copy list</button>
+          <button type="button" class="btn-ghost" id="shop-ticked">Remove ticked</button>
+          <button type="button" class="btn-ghost" id="shop-clear">Clear list</button>
+        </div>
+      </div>
     </form>
 
     <article class="card" id="card" aria-live="polite"></article>
@@ -900,7 +915,9 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     saveB.onclick = () => { saveRecipe(r); saveB.textContent = "Saved to recipe box"; };
     const copyB = el("button", "btn-ghost", "Copy as text"); copyB.type = "button";
     copyB.onclick = () => copyText(copyB);
-    act.append(saveB, copyB, ...extraActions());
+    const shopB = el("button", "btn-ghost", "Add to shopping list"); shopB.type = "button"; shopB.id = "shop-add";
+    shopB.onclick = () => { const n = addToShop(r, mult); shopB.textContent = n ? `Added ${n} item${n === 1 ? "" : "s"}` : "Already on your list"; setTimeout(() => shopB.textContent = "Add to shopping list", 1800); };
+    act.append(saveB, shopB, copyB, ...extraActions());
     top.append(act);
     card.append(top);
 
@@ -1225,6 +1242,69 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
       li.append(o, d); ul.append(li);
     });
   }
+
+
+  // ---------- Shopping list (this browser only), grouped by store aisle ----------
+  const AISLES = [
+    ["Frozen", /\bfrozen\b/i],
+    ["Spices", /\b(salt|black pepper|white pepper|peppercorn|paprika|cumin|turmeric|cinnamon|nutmeg|cloves?\b(?! garlic)|cardamom|coriander seed|ground coriander|chilli powder|chili powder|chilli flakes|cayenne|garam masala|curry powder|oregano|bay lea|five spice|allspice|saffron|star anise|vanilla|mustard seed|fennel seed|spice|seasoning)/i],
+    ["Fruit & veg", /\b(apple|banana|berr|lemon|lime|orange|mango|pineapple|melon|grape|kiwi|papaya|peach|pear|plum|cherr|avocado|tomato|potato|onion|shallot|garlic|ginger|carrot|celery|pepper|chilli|chili|jalape|lettuce|spinach|kale|cabbage|broccoli|cauliflower|courgette|zucchini|aubergine|eggplant|mushroom|leek|peas?\b|bean sprout|green bean|cucumber|radish|beetroot|squash|pumpkin|parsnip|turnip|asparagus|fennel|herb|parsley|coriander|cilantro|basil|mint|dill|thyme|rosemary|sage|chive|scallion|rocket|watercress|lemongrass|strawberr|raspberr|blueberr)/i],
+    ["Meat & fish", /\b(chicken|beef|pork|lamb|goat|mutton|turkey|duck|bacon|ham\b|sausage|chorizo|salami|mince|steak|veal|venison|salmon|tuna|cod\b|haddock|prawn|shrimp|fish|anchov|sardine|mackerel|crab|lobster|mussel|clam|squid|scallop|oyster)/i],
+    ["Dairy & eggs", /\b(milk|cream|butter(?!nut)|cheese|cheddar|parmesan|mozzarella|feta|ricotta|mascarpone|yogh?urt|eggs?\b|egg yolk|egg white|cr[eè]me fra[iî]che|ghee|paneer|halloumi|tofu)/i],
+    ["Bakery", /\b(bread|buns?\b|rolls?\b|baguette|pitt?a|tortilla|wraps?\b|naan|brioche|croissant|bagel)/i],
+    ["Drinks", /\b(juice|coffee|tea\b|tea bags?|coconut water|soda|lemonade|cola|ginger ale|wine|beer)/i],
+    ["Pantry", /./]
+  ];
+  const aisleOf = name => AISLES.find(([, re]) => re.test(name))[0];
+  const getShop = () => store.get("tk-shop", []);
+  function addToShop(r, mult) {
+    const list = getShop(); let added = 0;
+    (r.ingredient_groups || []).forEach(g => (g.items || []).forEach(it => {
+      const name = String(it.item || "").trim(); if (!name || /^(water|cold water|hot water|boiling water|ice|ice cubes)$/i.test(name)) return;
+      const qty = it.qty == null || isNaN(it.qty) ? null : Number(it.qty) * mult, unit = it.unit || "";
+      // The same ingredient in the same unit from another recipe adds up ("200 g + 300 g chicken" → 500 g).
+      const same = list.find(x => x.name.toLowerCase() === name.toLowerCase() && x.unit === unit && (x.qty == null) === (qty == null));
+      if (same) { if (!same.from.includes(r.title)) { if (qty != null) same.qty += qty; same.from.push(r.title); same.done = false; added++; } return; }
+      list.push({ name, qty, unit, raw: qty == null ? (it.raw || "") : "", aisle: aisleOf(name), from: [r.title], done: false }); added++;
+    }));
+    store.set("tk-shop", list); renderShop(); return added;
+  }
+  const shopLine = x => { const q = x.qty != null ? fmtQty(x.qty, x.unit) : x.raw; return (q ? q + " " : "") + x.name; };
+  function renderShop() {
+    const list = getShop(), box = $("#shop-list");
+    $("#shop").hidden = !list.length; box.replaceChildren();
+    $("#shop-title").textContent = "Shopping list · " + list.filter(x => !x.done).length + " to get";
+    AISLES.forEach(([aisle]) => {
+      const items = list.map((x, i) => [x, i]).filter(([x]) => x.aisle === aisle); if (!items.length) return;
+      const ul = el("ul"); box.append(el("h4", null, aisle), ul);
+      items.forEach(([x, i]) => {
+        const li = el("li"), lab = el("label", x.done ? "done" : null), cb = el("input"); cb.type = "checkbox"; cb.checked = x.done;
+        cb.onchange = () => { const l = getShop(); l[i].done = cb.checked; store.set("tk-shop", l); renderShop(); };
+        const txt = el("span", null, shopLine(x)); txt.title = "For " + x.from.join(", "); lab.append(cb, txt);
+        const d = el("button", "del", "×"); d.type = "button"; d.setAttribute("aria-label", "Remove " + x.name);
+        d.onclick = () => { const l = getShop(); l.splice(i, 1); store.set("tk-shop", l); renderShop(); };
+        li.append(lab, d); ul.append(li);
+      });
+    });
+  }
+  function shopText() {
+    const list = getShop().filter(x => !x.done);
+    return "Shopping list\n" + AISLES.map(([a]) => { const xs = list.filter(x => x.aisle === a); return xs.length ? "\n" + a + "\n" + xs.map(x => "- " + shopLine(x)).join("\n") + "\n" : ""; }).join("");
+  }
+  $("#shop-copy").onclick = () => {
+    const b = $("#shop-copy"), t = shopText(), done = () => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy list", 1600); };
+    try {
+      if (navigator.share && matchMedia("(pointer: coarse)").matches) { navigator.share({ title: "Shopping list", text: t }).catch(() => {}); return; }
+      navigator.clipboard.writeText(t).then(done, () => prompt("Copy your list:", t));
+    } catch { prompt("Copy your list:", t); }
+  };
+  $("#shop-ticked").onclick = () => { store.set("tk-shop", getShop().filter(x => !x.done)); renderShop(); };
+  let shopArmed = false;
+  $("#shop-clear").onclick = () => {
+    const b = $("#shop-clear");
+    if (!shopArmed) { shopArmed = true; b.textContent = "Tap again to clear"; setTimeout(() => { shopArmed = false; b.textContent = "Clear list"; }, 3000); return; }
+    shopArmed = false; b.textContent = "Clear list"; store.set("tk-shop", []); renderShop();
+  };
 
   function show(r, isExample) {
     clearTimers();
@@ -1931,7 +2011,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
     state.units = u; store.set("tk-units", u);
     document.querySelectorAll(".units button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.u === u)));
     pressSeg("set-units", u);
-    paintUnits(); render();
+    paintUnits(); render(); renderShop();
   }
 
   // ---------- Wiring ----------
@@ -1970,7 +2050,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
-  applySettings(); paintTicket(); renderSaved(); paintUnits();
+  applySettings(); paintTicket(); renderSaved(); renderShop(); paintUnits();
   const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
   if (noClaude) { document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); $("#offline-note").hidden = startMode === "trending"; }
   const linked = location.hash.match(/^#recipe=(\d+|d\d+|p-[a-z-]+)$/);
