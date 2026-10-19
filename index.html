@@ -120,6 +120,11 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .shop h4 { margin: 8px 0 2px; font-family: var(--mono); font-size: 11.5px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .shop label { display: flex; gap: 8px; align-items: baseline; flex: 1; min-width: 0; font-size: 15px; cursor: pointer; overflow-wrap: anywhere; }
 .shop label.done span { text-decoration: line-through; color: var(--muted); }
+.week li { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; }
+.week li b { font-family: var(--mono); font-size: 12px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.week select { min-width: 0; width: 100%; padding: 6px 8px; font: inherit; font-size: 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.week li button.go { border: 0; background: none; color: var(--basil); cursor: pointer; font-size: 13px; text-decoration: underline; padding: 4px 0; }
+.week li button.go:disabled { visibility: hidden; }
 .shop-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .shop-actions button { padding: 6px 10px; font-size: 13px; }
 .saved li button.del { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
@@ -611,6 +616,15 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
         <span class="legend">Recipe box</span>
         <ul id="saved-list"></ul>
         <p class="empty-note" id="saved-empty">Recipes you save appear here, in this browser.</p>
+      </div>
+
+      <div class="saved week" id="week" hidden>
+        <span class="legend">This week</span>
+        <ul id="week-list"></ul>
+        <div class="shop-actions">
+          <button type="button" class="btn-ghost" id="week-shop">Add the week to shopping list</button>
+          <button type="button" class="btn-ghost" id="week-clear">Clear week</button>
+        </div>
       </div>
 
       <div class="saved shop" id="shop" hidden>
@@ -1227,7 +1241,7 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
   const isSaved = r => !(r.kind === "plan" ? state.planExample : state.isExample) && getSaved().some(x => keyOf(x) === keyOf(r));
   function saveRecipe(r) {
     const list = getSaved().filter(x => keyOf(x) !== keyOf(r));
-    list.unshift(r); store.set("tk-saved", list.slice(0, 40)); renderSaved();
+    list.unshift(r); store.set("tk-saved", list.slice(0, 40)); renderSaved(); renderWeek();
   }
   function renderSaved() {
     const list = getSaved(), ul = $("#saved-list");
@@ -1238,7 +1252,7 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
       const o = el("button", "open", (r.kind === "plan" ? "Plan · " : "") + r.title); o.type = "button";
       o.onclick = () => r.kind === "plan" ? showPlan(r, false) : show(r, false);
       const d = el("button", "del", "×"); d.type = "button"; d.setAttribute("aria-label", "Remove " + r.title);
-      d.onclick = () => { const l = getSaved(); l.splice(i, 1); store.set("tk-saved", l); renderSaved(); };
+      d.onclick = () => { const l = getSaved(); l.splice(i, 1); store.set("tk-saved", l); renderSaved(); renderWeek(); };
       li.append(o, d); ul.append(li);
     });
   }
@@ -1304,6 +1318,39 @@ dialog.cook[open] { display: grid; grid-template-columns: minmax(0, 1fr); grid-t
     const b = $("#shop-clear");
     if (!shopArmed) { shopArmed = true; b.textContent = "Tap again to clear"; setTimeout(() => { shopArmed = false; b.textContent = "Clear list"; }, 3000); return; }
     shopArmed = false; b.textContent = "Clear list"; store.set("tk-shop", []); renderShop();
+  };
+
+
+  // ---------- Week plan: pick a recipe-box recipe for each day (this browser only) ----------
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const getWeek = () => store.get("tk-week", {});
+  function renderWeek() {
+    const box = getSaved().filter(r => r.kind !== "plan"), week = getWeek(), ul = $("#week-list");
+    // Keep planned recipes even if they were removed from the box, so the week doesn't lose them.
+    const options = [...box]; Object.values(week).forEach(r => { if (r && !options.some(x => keyOf(x) === keyOf(r))) options.push(r); });
+    $("#week").hidden = !options.length; ul.replaceChildren();
+    DAYS.forEach(day => {
+      const li = el("li"), sel = el("select"); sel.setAttribute("aria-label", day);
+      sel.append(new Option("—", ""));
+      options.forEach(r => sel.append(new Option(r.title, keyOf(r), false, !!week[day] && keyOf(week[day]) === keyOf(r))));
+      sel.onchange = () => { const w = getWeek(); const r = options.find(x => keyOf(x) === sel.value); if (r) w[day] = r; else delete w[day]; store.set("tk-week", w); renderWeek(); };
+      const go = el("button", "go", "Open"); go.type = "button"; go.disabled = !week[day]; go.setAttribute("aria-label", "Open " + day + "'s recipe");
+      go.onclick = () => { if (week[day]) { setMode("recipe"); show(week[day], false); } };
+      li.append(el("b", null, day.slice(0, 3)), sel, go); ul.append(li);
+    });
+    $("#week-shop").disabled = !Object.keys(week).length;
+  }
+  $("#week-shop").onclick = () => {
+    const counts = new Map(); Object.values(getWeek()).forEach(r => { const k = keyOf(r); counts.set(k, { r, n: (counts.get(k)?.n || 0) + 1 }); });
+    // A recipe planned twice goes on the list twice over.
+    let n = 0; counts.forEach(({ r, n: times }) => { n += addToShop(r, times); });
+    const b = $("#week-shop"); b.textContent = n ? `Added ${n} item${n === 1 ? "" : "s"}` : "Already on your list"; setTimeout(() => b.textContent = "Add the week to shopping list", 1800);
+  };
+  let weekArmed = false;
+  $("#week-clear").onclick = () => {
+    const b = $("#week-clear");
+    if (!weekArmed) { weekArmed = true; b.textContent = "Tap again to clear"; setTimeout(() => { weekArmed = false; b.textContent = "Clear week"; }, 3000); return; }
+    weekArmed = false; b.textContent = "Clear week"; store.set("tk-week", {}); renderWeek();
   };
 
   function show(r, isExample) {
@@ -1941,7 +1988,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   $("#clear-box").onclick = () => {
     const b = $("#clear-box");
     if (!clearArmed) { clearArmed = true; b.textContent = "Tap again to delete all"; setTimeout(() => { clearArmed = false; b.textContent = "Clear recipe box"; }, 4000); return; }
-    clearArmed = false; store.set("tk-saved", []); renderSaved(); render(); b.textContent = "Clear recipe box";
+    clearArmed = false; store.set("tk-saved", []); renderSaved(); renderWeek(); render(); b.textContent = "Clear recipe box";
     $("#danger-note").textContent = "Recipe box cleared.";
   };
   // ---------- Cook mode ----------
@@ -2050,7 +2097,7 @@ Include these days: "Training day", "Game day" (or "Competition day"), and "Rest
   $("#stop").onclick = () => ctl?.abort();
   $("#photo").onchange = e => { photoFile = e.target.files?.[0] || null; $("#photo-name").textContent = photoFile ? photoFile.name : ""; };
 
-  applySettings(); paintTicket(); renderSaved(); renderShop(); paintUnits();
+  applySettings(); paintTicket(); renderSaved(); renderWeek(); renderShop(); paintUnits();
   const startMode = settings.start === "last" ? store.get("tk-mode", "recipe") : settings.start;
   if (noClaude) { document.querySelectorAll(".claude-only").forEach(x => x.hidden = true); $("#offline-note").hidden = startMode === "trending"; }
   const linked = location.hash.match(/^#recipe=(\d+|d\d+|p-[a-z-]+)$/);
