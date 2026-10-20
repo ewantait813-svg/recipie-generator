@@ -1,0 +1,48 @@
+name: Quick site check
+
+# Every 10 minutes from 6am to 11pm Pacific: loads the live site on a phone-sized browser and checks
+# pages and files, search, a recipe, Cook mode, Trending, Chef Pip, the redirect and JS errors.
+# A failed run shows a red X on the Actions tab and GitHub emails the repo owner.
+on:
+  schedule:
+    # 13:00–07:59 UTC covers 6am–11pm Pacific in both summer and winter; the gate below trims the rest.
+    - cron: "*/10 0-7,13-23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quickcheck
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Only run 6am to 11pm Pacific
+        id: gate
+        run: |
+          hour=$(TZ=America/Los_Angeles date +%-H)
+          if [ "${{ github.event_name }}" = "schedule" ] && { [ "$hour" -lt 6 ] || [ "$hour" -ge 23 ]; }; then echo "run=false" >> "$GITHUB_OUTPUT"; echo "It's ${hour}:00 in Los Angeles, skipping."; else echo "run=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 20
+      - name: Install Playwright
+        if: steps.gate.outputs.run == 'true'
+        run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: Check the live site
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          # One retry so a single network blip doesn't count as an outage.
+          if ! node .github/scripts/quickcheck.js | tee out.txt; then
+            echo "Retrying once..."; sleep 20
+            node .github/scripts/quickcheck.js | tee out.txt
+          fi
+      - name: Summary
+        if: always() && steps.gate.outputs.run == 'true'
+        run: '{ echo "### $(head -1 out.txt)"; echo; echo "\`\`\`"; tail -n +2 out.txt; echo "\`\`\`"; } >> "$GITHUB_STEP_SUMMARY"'
