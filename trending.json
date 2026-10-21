@@ -1,48 +1,28 @@
 {
- "updated": "2026-10-20T13:35:19.165Z",
- "from": "2026-10-06",
- "to": "2026-10-19",
+ "updated": "2026-10-21T13:35:46.591Z",
+ "from": "2026-10-07",
+ "to": "2026-10-20",
  "source": "English Wikipedia page views",
  "dishes": [
-  {
-   "dish": "Baklava",
-   "wiki": "Baklava",
-   "id": "53279",
-   "recipe": "Baklava with spiced nuts, ricotta & chocolate",
-   "thumb": "https://www.themealdb.com/images/media/meals/ytme8t1764111401.jpg",
-   "views7": 11920,
-   "prev7": 9786,
-   "change": 22
-  },
   {
    "dish": "Shakshouka",
    "wiki": "Shakshouka",
    "id": "52963",
    "recipe": "Shakshuka",
    "thumb": "https://www.themealdb.com/images/media/meals/g373701551450225.jpg",
-   "views7": 11887,
-   "prev7": 12558,
-   "change": -5
+   "views7": 12142,
+   "prev7": 12618,
+   "change": -4
   },
   {
-   "dish": "Shepherd's pie",
-   "wiki": "Shepherd's pie",
-   "id": "53000",
-   "recipe": "Vegetable Shepherds Pie",
-   "thumb": "https://www.themealdb.com/images/media/meals/w8umt11583268117.jpg",
-   "views7": 10359,
-   "prev7": 11204,
-   "change": -8
-  },
-  {
-   "dish": "Pizza",
-   "wiki": "Pizza",
-   "id": "53014",
-   "recipe": "Pizza Express Margherita",
-   "thumb": "https://www.themealdb.com/images/media/meals/x0lk931587671540.jpg",
-   "views7": 10262,
-   "prev7": 10201,
-   "change": 1
+   "dish": "Baklava",
+   "wiki": "Baklava",
+   "id": "53279",
+   "recipe": "Baklava with spiced nuts, ricotta & chocolate",
+   "thumb": "https://www.themealdb.com/images/media/meals/ytme8t1764111401.jpg",
+   "views7": 11644,
+   "prev7": 9957,
+   "change": 17
   },
   {
    "dish": "Sushi",
@@ -50,9 +30,29 @@
    "id": "53065",
    "recipe": "Sushi",
    "thumb": "https://www.themealdb.com/images/media/meals/g046bb1663960946.jpg",
-   "views7": 10120,
-   "prev7": 9686,
-   "change": 4
+   "views7": 10372,
+   "prev7": 9839,
+   "change": 5
+  },
+  {
+   "dish": "Pizza",
+   "wiki": "Pizza",
+   "id": "53014",
+   "recipe": "Pizza Express Margherita",
+   "thumb": "https://www.themealdb.com/images/media/meals/x0lk931587671540.jpg",
+   "views7": 10309,
+   "prev7": 10242,
+   "change": 1
+  },
+  {
+   "dish": "Shepherd's pie",
+   "wiki": "Shepherd's pie",
+   "id": "53000",
+   "recipe": "Vegetable Shepherds Pie",
+   "thumb": "https://www.themealdb.com/images/media/meals/w8umt11583268117.jpg",
+   "views7": 10296,
+   "prev7": 10650,
+   "change": -3
   },
   {
    "dish": "Bolognese sauce",
@@ -60,9 +60,9 @@
    "id": "52770",
    "recipe": "Spaghetti Bolognese",
    "thumb": "https://www.themealdb.com/images/media/meals/sutysw1468247559.jpg",
-   "views7": 10113,
-   "prev7": 10491,
-   "change": -4
+   "views7": 10103,
+   "prev7": 10430,
+   "change": -3
   },
   {
    "dish": "Hamburger",
@@ -70,9 +70,9 @@
    "id": "53099",
    "recipe": "Aussie Burgers",
    "thumb": "https://www.themealdb.com/images/media/meals/44bzep1761848278.jpg",
-   "views7": 9770,
-   "prev7": 9997,
-   "change": -2
+   "views7": 9772,
+   "prev7": 10111,
+   "change": -3
   },
   {
    "dish": "Carbonara",
@@ -80,9 +80,9 @@
    "id": "52982",
    "recipe": "Spaghetti alla Carbonara",
    "thumb": "https://www.themealdb.com/images/media/meals/llcbn01574260722.jpg",
-   "views7": 9075,
-   "prev7": 8970,
-   "change": 1
+   "views7": 9147,
+   "prev7": 8996,
+   "change": 2
   },
   {
    "dish": "Borscht",
@@ -90,58 +90,8 @@
    "id": "53078",
    "recipe": "Beetroot Soup (Borscht)",
    "thumb": "https://www.themealdb.com/images/media/meals/zadvgb1699012544.jpg",
-   "views7": 9072,
-   "prev7": 9222,
-   "change": -2
-  },
-  {
-   "dish": "Pierogi",
-   "wiki": "Pierogi",
-   "id": "53296",
-   "recipe": "Sauerkraut pierogi",
-   "thumb": "https://www.themealdb.com/images/media/meals/ckbx1h1764123606.jpg",
-   "views7": 7854,
-   "prev7": 9195,
-   "change": -15
-  },
-  {
-   "dish": "Chili con carne",
-   "wiki": "Chili con carne",
-   "id": "52826",
-   "recipe": "Braised Beef Chilli",
-   "thumb": "https://www.themealdb.com/images/media/meals/uuqvwu1504629254.jpg",
-   "views7": 7605,
-   "prev7": 7287,
-   "change": 4
-  },
-  {
-   "dish": "Beef Wellington",
-   "wiki": "Beef Wellington",
-   "id": "52803",
-   "recipe": "Beef Wellington",
-   "thumb": "https://www.themealdb.com/images/media/meals/vvpprx1487325699.jpg",
-   "views7": 7567,
-   "prev7": 7466,
-   "change": 1
-  },
-  {
-   "dish": "Falafel",
-   "wiki": "Falafel",
-   "id": "53266",
-   "recipe": "Falafel",
-   "thumb": "https://www.themealdb.com/images/media/meals/u5e9qq1763795441.jpg",
-   "views7": 7409,
-   "prev7": 8487,
-   "change": -13
-  },
-  {
-   "dish": "Ramen",
-   "wiki": "Ramen",
-   "id": "53383",
-   "recipe": "Ramen Noodles with Boiled Egg",
-   "thumb": "https://www.themealdb.com/images/media/meals/ip5xtp1769779958.jpg",
-   "views7": 7388,
-   "prev7": 7527,
+   "views7": 9055,
+   "prev7": 9286,
    "change": -2
   },
   {
@@ -150,39 +100,59 @@
    "id": "53269",
    "recipe": "Hummus",
    "thumb": "https://www.themealdb.com/images/media/meals/gpon5u1763801180.jpg",
-   "views7": 7128,
-   "prev7": 6274,
-   "change": 14
+   "views7": 8113,
+   "prev7": 6309,
+   "change": 29
   },
   {
-   "dish": "Poutine",
-   "wiki": "Poutine",
-   "id": "52804",
-   "recipe": "Poutine",
-   "thumb": "https://www.themealdb.com/images/media/meals/uuyrrx1487327597.jpg",
-   "views7": 7029,
-   "prev7": 7474,
-   "change": -6
+   "dish": "Pierogi",
+   "wiki": "Pierogi",
+   "id": "53296",
+   "recipe": "Sauerkraut pierogi",
+   "thumb": "https://www.themealdb.com/images/media/meals/ckbx1h1764123606.jpg",
+   "views7": 7735,
+   "prev7": 9149,
+   "change": -15
   },
   {
-   "dish": "Goulash",
-   "wiki": "Goulash",
-   "id": "53301",
-   "recipe": "Pork & sauerkraut goulash",
-   "thumb": "https://www.themealdb.com/images/media/meals/cyuhwp1764362103.jpg",
-   "views7": 6876,
-   "prev7": 6430,
-   "change": 7
+   "dish": "Chili con carne",
+   "wiki": "Chili con carne",
+   "id": "52826",
+   "recipe": "Braised Beef Chilli",
+   "thumb": "https://www.themealdb.com/images/media/meals/uuqvwu1504629254.jpg",
+   "views7": 7671,
+   "prev7": 7283,
+   "change": 5
   },
   {
-   "dish": "Pad thai",
-   "wiki": "Pad thai",
-   "id": "53191",
-   "recipe": "Pad Thai",
-   "thumb": "https://www.themealdb.com/images/media/meals/rg9ze01763479093.jpg",
-   "views7": 6840,
-   "prev7": 6046,
-   "change": 13
+   "dish": "Beef Wellington",
+   "wiki": "Beef Wellington",
+   "id": "52803",
+   "recipe": "Beef Wellington",
+   "thumb": "https://www.themealdb.com/images/media/meals/vvpprx1487325699.jpg",
+   "views7": 7593,
+   "prev7": 7376,
+   "change": 3
+  },
+  {
+   "dish": "Ramen",
+   "wiki": "Ramen",
+   "id": "53383",
+   "recipe": "Ramen Noodles with Boiled Egg",
+   "thumb": "https://www.themealdb.com/images/media/meals/ip5xtp1769779958.jpg",
+   "views7": 7510,
+   "prev7": 7491,
+   "change": 0
+  },
+  {
+   "dish": "Falafel",
+   "wiki": "Falafel",
+   "id": "53266",
+   "recipe": "Falafel",
+   "thumb": "https://www.themealdb.com/images/media/meals/u5e9qq1763795441.jpg",
+   "views7": 7341,
+   "prev7": 8061,
+   "change": -9
   },
   {
    "dish": "Pho",
@@ -190,9 +160,39 @@
    "id": "53238",
    "recipe": "Beef pho",
    "thumb": "https://www.themealdb.com/images/media/meals/pbzcrx1763765096.jpg",
-   "views7": 6831,
-   "prev7": 6299,
-   "change": 8
+   "views7": 6971,
+   "prev7": 6322,
+   "change": 10
+  },
+  {
+   "dish": "Goulash",
+   "wiki": "Goulash",
+   "id": "53301",
+   "recipe": "Pork & sauerkraut goulash",
+   "thumb": "https://www.themealdb.com/images/media/meals/cyuhwp1764362103.jpg",
+   "views7": 6902,
+   "prev7": 6516,
+   "change": 6
+  },
+  {
+   "dish": "Pad thai",
+   "wiki": "Pad thai",
+   "id": "53191",
+   "recipe": "Pad Thai",
+   "thumb": "https://www.themealdb.com/images/media/meals/rg9ze01763479093.jpg",
+   "views7": 6893,
+   "prev7": 6085,
+   "change": 13
+  },
+  {
+   "dish": "Poutine",
+   "wiki": "Poutine",
+   "id": "52804",
+   "recipe": "Poutine",
+   "thumb": "https://www.themealdb.com/images/media/meals/uuyrrx1487327597.jpg",
+   "views7": 6879,
+   "prev7": 7536,
+   "change": -9
   },
   {
    "dish": "Couscous",
@@ -200,9 +200,9 @@
    "id": "52850",
    "recipe": "Chicken Couscous",
    "thumb": "https://www.themealdb.com/images/media/meals/qxytrx1511304021.jpg",
-   "views7": 6797,
-   "prev7": 7162,
-   "change": -5
+   "views7": 6801,
+   "prev7": 7077,
+   "change": -4
   },
   {
    "dish": "Paella",
@@ -210,9 +210,9 @@
    "id": "53151",
    "recipe": "Paella",
    "thumb": "https://www.themealdb.com/images/media/meals/9bl20p1763248192.jpg",
-   "views7": 6774,
-   "prev7": 8124,
-   "change": -17
+   "views7": 6576,
+   "prev7": 8161,
+   "change": -19
   },
   {
    "dish": "Biryani",
@@ -220,9 +220,9 @@
    "id": "52805",
    "recipe": "Lamb Biryani",
    "thumb": "https://www.themealdb.com/images/media/meals/xrttsx1487339558.jpg",
-   "views7": 6085,
-   "prev7": 6382,
-   "change": -5
+   "views7": 6157,
+   "prev7": 6351,
+   "change": -3
   },
   {
    "dish": "Beef Stroganoff",
@@ -230,39 +230,9 @@
    "id": "52834",
    "recipe": "Beef stroganoff",
    "thumb": "https://www.themealdb.com/images/media/meals/svprys1511176755.jpg",
-   "views7": 5850,
-   "prev7": 5603,
-   "change": 4
-  },
-  {
-   "dish": "Eggs Benedict",
-   "wiki": "Eggs Benedict",
-   "id": "52962",
-   "recipe": "Salmon Eggs Eggs Benedict",
-   "thumb": "https://www.themealdb.com/images/media/meals/1550440197.jpg",
-   "views7": 5797,
-   "prev7": 5845,
-   "change": -1
-  },
-  {
-   "dish": "Doughnut",
-   "wiki": "Doughnut",
-   "id": "53393",
-   "recipe": "Dutch doughnuts",
-   "thumb": "https://www.themealdb.com/images/media/meals/cz1d6v1777627421.jpg",
-   "views7": 5691,
-   "prev7": 5090,
-   "change": 12
-  },
-  {
-   "dish": "Beef bourguignon",
-   "wiki": "Beef bourguignon",
-   "id": "52904",
-   "recipe": "Beef Bourguignon",
-   "thumb": "https://www.themealdb.com/images/media/meals/vtqxtu1511784197.jpg",
-   "views7": 5578,
-   "prev7": 5568,
-   "change": 0
+   "views7": 5921,
+   "prev7": 5636,
+   "change": 5
   },
   {
    "dish": "Ratatouille",
@@ -270,9 +240,39 @@
    "id": "52908",
    "recipe": "Ratatouille",
    "thumb": "https://www.themealdb.com/images/media/meals/wrpwuu1511786491.jpg",
-   "views7": 5576,
-   "prev7": 5120,
-   "change": 9
+   "views7": 5729,
+   "prev7": 5008,
+   "change": 14
+  },
+  {
+   "dish": "Eggs Benedict",
+   "wiki": "Eggs Benedict",
+   "id": "52962",
+   "recipe": "Salmon Eggs Eggs Benedict",
+   "thumb": "https://www.themealdb.com/images/media/meals/1550440197.jpg",
+   "views7": 5699,
+   "prev7": 5888,
+   "change": -3
+  },
+  {
+   "dish": "Beef bourguignon",
+   "wiki": "Beef bourguignon",
+   "id": "52904",
+   "recipe": "Beef Bourguignon",
+   "thumb": "https://www.themealdb.com/images/media/meals/vtqxtu1511784197.jpg",
+   "views7": 5641,
+   "prev7": 5550,
+   "change": 2
+  },
+  {
+   "dish": "Doughnut",
+   "wiki": "Doughnut",
+   "id": "53393",
+   "recipe": "Dutch doughnuts",
+   "thumb": "https://www.themealdb.com/images/media/meals/cz1d6v1777627421.jpg",
+   "views7": 5468,
+   "prev7": 5312,
+   "change": 3
   },
   {
    "dish": "Risotto",
@@ -280,8 +280,18 @@
    "id": "52823",
    "recipe": "Salmon Prawn Risotto",
    "thumb": "https://www.themealdb.com/images/media/meals/xxrxux1503070723.jpg",
-   "views7": 5226,
-   "prev7": 5026,
+   "views7": 5241,
+   "prev7": 4986,
+   "change": 5
+  },
+  {
+   "dish": "Lasagna",
+   "wiki": "Lasagna",
+   "id": "52844",
+   "recipe": "Lasagne",
+   "thumb": "https://www.themealdb.com/images/media/meals/wtsvxx1511296896.jpg",
+   "views7": 4924,
+   "prev7": 4747,
    "change": 4
   },
   {
@@ -290,19 +300,9 @@
    "id": "53006",
    "recipe": "Moussaka",
    "thumb": "https://www.themealdb.com/images/media/meals/ctg8jd1585563097.jpg",
-   "views7": 4936,
-   "prev7": 5275,
-   "change": -6
-  },
-  {
-   "dish": "Lasagna",
-   "wiki": "Lasagna",
-   "id": "52844",
-   "recipe": "Lasagne",
-   "thumb": "https://www.themealdb.com/images/media/meals/wtsvxx1511296896.jpg",
-   "views7": 4889,
-   "prev7": 4729,
-   "change": 3
+   "views7": 4821,
+   "prev7": 5273,
+   "change": -9
   },
   {
    "dish": "Cheesecake",
@@ -310,29 +310,9 @@
    "id": "52858",
    "recipe": "New York cheesecake",
    "thumb": "https://www.themealdb.com/images/media/meals/swttys1511385853.jpg",
-   "views7": 4683,
-   "prev7": 5164,
-   "change": -9
-  },
-  {
-   "dish": "Pancake",
-   "wiki": "Pancake",
-   "id": "52854",
-   "recipe": "Pancakes",
-   "thumb": "https://www.themealdb.com/images/media/meals/rwuyqx1511383174.jpg",
-   "views7": 4617,
-   "prev7": 4479,
-   "change": 3
-  },
-  {
-   "dish": "Empanada",
-   "wiki": "Empanada",
-   "id": "53134",
-   "recipe": "Empanadas",
-   "thumb": "https://www.themealdb.com/images/media/meals/q99te31763075494.jpg",
-   "views7": 4565,
-   "prev7": 4942,
-   "change": -8
+   "views7": 4614,
+   "prev7": 5112,
+   "change": -10
   },
   {
    "dish": "Taco",
@@ -340,9 +320,29 @@
    "id": "52819",
    "recipe": "Cajun spiced fish tacos",
    "thumb": "https://www.themealdb.com/images/media/meals/uvuyxu1503067369.jpg",
-   "views7": 4520,
-   "prev7": 4803,
-   "change": -6
+   "views7": 4599,
+   "prev7": 4596,
+   "change": 0
+  },
+  {
+   "dish": "Pancake",
+   "wiki": "Pancake",
+   "id": "52854",
+   "recipe": "Pancakes",
+   "thumb": "https://www.themealdb.com/images/media/meals/rwuyqx1511383174.jpg",
+   "views7": 4592,
+   "prev7": 4486,
+   "change": 2
+  },
+  {
+   "dish": "Empanada",
+   "wiki": "Empanada",
+   "id": "53134",
+   "recipe": "Empanadas",
+   "thumb": "https://www.themealdb.com/images/media/meals/q99te31763075494.jpg",
+   "views7": 4569,
+   "prev7": 4907,
+   "change": -7
   },
   {
    "dish": "Cinnamon roll",
@@ -350,19 +350,9 @@
    "id": "53116",
    "recipe": "Cinnamon buns",
    "thumb": "https://www.themealdb.com/images/media/meals/as88dq1762772486.jpg",
-   "views7": 4416,
-   "prev7": 4687,
-   "change": -6
-  },
-  {
-   "dish": "Kung Pao chicken",
-   "wiki": "Kung Pao chicken",
-   "id": "52945",
-   "recipe": "Kung Pao Chicken",
-   "thumb": "https://www.themealdb.com/images/media/meals/1525872624.jpg",
-   "views7": 4356,
-   "prev7": 4375,
-   "change": 0
+   "views7": 4451,
+   "prev7": 4610,
+   "change": -3
   },
   {
    "dish": "Full breakfast",
@@ -370,9 +360,19 @@
    "id": "52896",
    "recipe": "Full English Breakfast",
    "thumb": "https://www.themealdb.com/images/media/meals/sqrtwu1511721265.jpg",
-   "views7": 4322,
-   "prev7": 4403,
-   "change": -2
+   "views7": 4340,
+   "prev7": 4398,
+   "change": -1
+  },
+  {
+   "dish": "Kung Pao chicken",
+   "wiki": "Kung Pao chicken",
+   "id": "52945",
+   "recipe": "Kung Pao Chicken",
+   "thumb": "https://www.themealdb.com/images/media/meals/1525872624.jpg",
+   "views7": 4333,
+   "prev7": 4325,
+   "change": 0
   },
   {
    "dish": "Sticky toffee pudding",
@@ -380,9 +380,9 @@
    "id": "52883",
    "recipe": "Sticky Toffee Pudding",
    "thumb": "https://www.themealdb.com/images/media/meals/xqqqtu1511637379.jpg",
-   "views7": 4213,
-   "prev7": 3847,
-   "change": 10
+   "views7": 4267,
+   "prev7": 3929,
+   "change": 9
   },
   {
    "dish": "Kebab",
@@ -390,19 +390,9 @@
    "id": "53262",
    "recipe": "Adana kebab",
    "thumb": "https://www.themealdb.com/images/media/meals/04axct1763793018.jpg",
-   "views7": 4172,
-   "prev7": 4211,
+   "views7": 4183,
+   "prev7": 4246,
    "change": -1
-  },
-  {
-   "dish": "Bakewell tart",
-   "wiki": "Bakewell tart",
-   "id": "52767",
-   "recipe": "Bakewell tart",
-   "thumb": "https://www.themealdb.com/images/media/meals/wyrqqq1468233628.jpg",
-   "views7": 4038,
-   "prev7": 6731,
-   "change": -40
   },
   {
    "dish": "Macaroni and cheese",
@@ -410,29 +400,9 @@
    "id": "52818",
    "recipe": "Chicken Fajita Mac and Cheese",
    "thumb": "https://www.themealdb.com/images/media/meals/qrqywr1503066605.jpg",
-   "views7": 3894,
-   "prev7": 3727,
-   "change": 4
-  },
-  {
-   "dish": "Carrot cake",
-   "wiki": "Carrot cake",
-   "id": "52897",
-   "recipe": "Carrot Cake",
-   "thumb": "https://www.themealdb.com/images/media/meals/vrspxv1511722107.jpg",
-   "views7": 3717,
-   "prev7": 2033,
-   "change": 83
-  },
-  {
-   "dish": "Churro",
-   "wiki": "Churro",
-   "id": "53153",
-   "recipe": "Churros",
-   "thumb": "https://www.themealdb.com/images/media/meals/nxnny61763250596.jpg",
-   "views7": 3713,
-   "prev7": 3825,
-   "change": -3
+   "views7": 3918,
+   "prev7": 3738,
+   "change": 5
   },
   {
    "dish": "Fried chicken",
@@ -440,9 +410,39 @@
    "id": "52813",
    "recipe": "Kentucky Fried Chicken",
    "thumb": "https://www.themealdb.com/images/media/meals/40r49m1763197022.jpg",
-   "views7": 3676,
-   "prev7": 3577,
-   "change": 3
+   "views7": 3902,
+   "prev7": 3658,
+   "change": 7
+  },
+  {
+   "dish": "Bakewell tart",
+   "wiki": "Bakewell tart",
+   "id": "52767",
+   "recipe": "Bakewell tart",
+   "thumb": "https://www.themealdb.com/images/media/meals/wyrqqq1468233628.jpg",
+   "views7": 3751,
+   "prev7": 7066,
+   "change": -47
+  },
+  {
+   "dish": "Churro",
+   "wiki": "Churro",
+   "id": "53153",
+   "recipe": "Churros",
+   "thumb": "https://www.themealdb.com/images/media/meals/nxnny61763250596.jpg",
+   "views7": 3747,
+   "prev7": 3757,
+   "change": 0
+  },
+  {
+   "dish": "Carrot cake",
+   "wiki": "Carrot cake",
+   "id": "52897",
+   "recipe": "Carrot Cake",
+   "thumb": "https://www.themealdb.com/images/media/meals/vrspxv1511722107.jpg",
+   "views7": 3746,
+   "prev7": 2056,
+   "change": 82
   },
   {
    "dish": "Toad in the hole",
@@ -450,9 +450,9 @@
    "id": "52822",
    "recipe": "Toad In The Hole",
    "thumb": "https://www.themealdb.com/images/media/meals/ytuvwr1503070420.jpg",
-   "views7": 3642,
-   "prev7": 3700,
-   "change": -2
+   "views7": 3717,
+   "prev7": 3641,
+   "change": 2
   },
   {
    "dish": "Crème brûlée",
@@ -460,9 +460,9 @@
    "id": "52917",
    "recipe": "White chocolate creme brulee",
    "thumb": "https://www.themealdb.com/images/media/meals/uryqru1511798039.jpg",
-   "views7": 3366,
-   "prev7": 3428,
-   "change": -2
+   "views7": 3407,
+   "prev7": 3382,
+   "change": 1
   },
   {
    "dish": "Waffle",
@@ -470,9 +470,9 @@
    "id": "53578",
    "recipe": "Gingerbread Waffles",
    "thumb": "https://www.themealdb.com/images/media/meals/0wmns51784837949.jpg",
-   "views7": 3050,
-   "prev7": 3200,
-   "change": -5
+   "views7": 3129,
+   "prev7": 3157,
+   "change": -1
   },
   {
    "dish": "Apple pie",
@@ -480,9 +480,9 @@
    "id": "53575",
    "recipe": "Apple Pie",
    "thumb": "https://www.themealdb.com/images/media/meals/stnxzp1784835840.jpg",
-   "views7": 2967,
-   "prev7": 3293,
-   "change": -10
+   "views7": 2932,
+   "prev7": 3331,
+   "change": -12
   },
   {
    "dish": "Kedgeree",
@@ -490,8 +490,38 @@
    "id": "52887",
    "recipe": "Kedgeree",
    "thumb": "https://www.themealdb.com/images/media/meals/utxqpt1511639216.jpg",
-   "views7": 2933,
-   "prev7": 2928,
+   "views7": 2913,
+   "prev7": 2968,
+   "change": -2
+  },
+  {
+   "dish": "Arepa",
+   "wiki": "Arepa",
+   "id": "53325",
+   "recipe": "Venezuelan Arepas",
+   "thumb": "https://www.themealdb.com/images/media/meals/3hcy191764376285.jpg",
+   "views7": 2837,
+   "prev7": 3220,
+   "change": -12
+  },
+  {
+   "dish": "Coq au vin",
+   "wiki": "Coq au vin",
+   "id": "52832",
+   "recipe": "Coq au vin",
+   "thumb": "https://www.themealdb.com/images/media/meals/qstyvs1505931190.jpg",
+   "views7": 2816,
+   "prev7": 2983,
+   "change": -6
+  },
+  {
+   "dish": "Rogan josh",
+   "wiki": "Rogan josh",
+   "id": "52808",
+   "recipe": "Lamb Rogan josh",
+   "thumb": "https://www.themealdb.com/images/media/meals/vvstvq1487342592.jpg",
+   "views7": 2734,
+   "prev7": 2733,
    "change": 0
   },
   {
@@ -500,39 +530,9 @@
    "id": "52791",
    "recipe": "Eton Mess",
    "thumb": "https://www.themealdb.com/images/media/meals/uuxwvq1483907861.jpg",
-   "views7": 2904,
-   "prev7": 2156,
-   "change": 35
-  },
-  {
-   "dish": "Arepa",
-   "wiki": "Arepa",
-   "id": "53325",
-   "recipe": "Venezuelan Arepas",
-   "thumb": "https://www.themealdb.com/images/media/meals/3hcy191764376285.jpg",
-   "views7": 2871,
-   "prev7": 3334,
-   "change": -14
-  },
-  {
-   "dish": "Coq au vin",
-   "wiki": "Coq au vin",
-   "id": "52832",
-   "recipe": "Coq au vin",
-   "thumb": "https://www.themealdb.com/images/media/meals/qstyvs1505931190.jpg",
-   "views7": 2799,
-   "prev7": 3007,
-   "change": -7
-  },
-  {
-   "dish": "Rogan josh",
-   "wiki": "Rogan josh",
-   "id": "52808",
-   "recipe": "Lamb Rogan josh",
-   "thumb": "https://www.themealdb.com/images/media/meals/vvstvq1487342592.jpg",
-   "views7": 2694,
-   "prev7": 2747,
-   "change": -2
+   "views7": 2722,
+   "prev7": 2456,
+   "change": 11
   },
   {
    "dish": "Tonkatsu",
@@ -540,209 +540,9 @@
    "id": "53032",
    "recipe": "Tonkatsu pork",
    "thumb": "https://www.themealdb.com/images/media/meals/lwsnkl1604181187.jpg",
-   "views7": 2647,
-   "prev7": 2504,
-   "change": 6
-  },
-  {
-   "dish": "Dal",
-   "wiki": "Dal",
-   "id": "52785",
-   "recipe": "Dal fry",
-   "thumb": "https://www.themealdb.com/images/media/meals/wuxrtu1483564410.jpg",
-   "views7": 2403,
-   "prev7": 2429,
-   "change": -1
-  },
-  {
-   "dish": "Pumpkin pie",
-   "wiki": "Pumpkin pie",
-   "id": "52857",
-   "recipe": "Pumpkin Pie",
-   "thumb": "https://www.themealdb.com/images/media/meals/usuqtp1511385394.jpg",
-   "views7": 2367,
-   "prev7": 2602,
-   "change": -9
-  },
-  {
-   "dish": "Tagine",
-   "wiki": "Tagine",
-   "id": "52843",
-   "recipe": "Lamb Tagine",
-   "thumb": "https://www.themealdb.com/images/media/meals/yuwtuu1511295751.jpg",
-   "views7": 2257,
-   "prev7": 2051,
-   "change": 10
-  },
-  {
-   "dish": "Omelette",
-   "wiki": "Omelette",
-   "id": "52915",
-   "recipe": "French Omelette",
-   "thumb": "https://www.themealdb.com/images/media/meals/yvpuuy1511797244.jpg",
-   "views7": 2253,
-   "prev7": 2375,
-   "change": -5
-  },
-  {
-   "dish": "Key lime pie",
-   "wiki": "Key lime pie",
-   "id": "52859",
-   "recipe": "Key Lime Pie",
-   "thumb": "https://www.themealdb.com/images/media/meals/qpqtuu1511386216.jpg",
-   "views7": 2232,
-   "prev7": 2297,
-   "change": -3
-  },
-  {
-   "dish": "Teriyaki",
-   "wiki": "Teriyaki",
-   "id": "52773",
-   "recipe": "Honey Teriyaki Salmon",
-   "thumb": "https://www.themealdb.com/images/media/meals/xxyupu1468262513.jpg",
-   "views7": 2215,
-   "prev7": 2179,
-   "change": 2
-  },
-  {
-   "dish": "Chocolate brownie",
-   "wiki": "Chocolate brownie",
-   "id": "52860",
-   "recipe": "Chocolate Raspberry Brownies",
-   "thumb": "https://www.themealdb.com/images/media/meals/yypvst1511386427.jpg",
-   "views7": 2206,
-   "prev7": 2023,
+   "views7": 2691,
+   "prev7": 2464,
    "change": 9
-  },
-  {
-   "dish": "Laksa",
-   "wiki": "Laksa",
-   "id": "52821",
-   "recipe": "Laksa King Prawn Noodles",
-   "thumb": "https://www.themealdb.com/images/media/meals/rvypwy1503069308.jpg",
-   "views7": 2204,
-   "prev7": 2262,
-   "change": -3
-  },
-  {
-   "dish": "Nasi lemak",
-   "wiki": "Nasi lemak",
-   "id": "53051",
-   "recipe": "Nasi lemak",
-   "thumb": "https://www.themealdb.com/images/media/meals/wai9bw1619788844.jpg",
-   "views7": 2131,
-   "prev7": 2042,
-   "change": 4
-  },
-  {
-   "dish": "Fried rice",
-   "wiki": "Fried rice",
-   "id": "53367",
-   "recipe": "Chicken Fried Rice",
-   "thumb": "https://www.themealdb.com/images/media/meals/wuyd2h1765655837.jpg",
-   "views7": 2102,
-   "prev7": 2175,
-   "change": -3
-  },
-  {
-   "dish": "Clam chowder",
-   "wiki": "Clam chowder",
-   "id": "52840",
-   "recipe": "Clam chowder",
-   "thumb": "https://www.themealdb.com/images/media/meals/rvtvuw1511190488.jpg",
-   "views7": 1991,
-   "prev7": 2196,
-   "change": -9
-  },
-  {
-   "dish": "Meatball",
-   "wiki": "Meatball",
-   "id": "53277",
-   "recipe": "Lamb & apricot meatballs",
-   "thumb": "https://www.themealdb.com/images/media/meals/72fgzj1764109947.jpg",
-   "views7": 1947,
-   "prev7": 1847,
-   "change": 5
-  },
-  {
-   "dish": "Rendang",
-   "wiki": "Rendang",
-   "id": "53053",
-   "recipe": "Beef Rendang",
-   "thumb": "https://www.themealdb.com/images/media/meals/bc8v651619789840.jpg",
-   "views7": 1520,
-   "prev7": 1543,
-   "change": -1
-  },
-  {
-   "dish": "Feijoada",
-   "wiki": "Feijoada",
-   "id": "53482",
-   "recipe": "Black bean & meat stew - feijoada",
-   "thumb": "https://www.themealdb.com/images/media/meals/xrxz7h1782592711.jpg",
-   "views7": 1343,
-   "prev7": 1341,
-   "change": 0
-  },
-  {
-   "dish": "Jerk",
-   "wiki": "Jerk (cooking)",
-   "id": "52937",
-   "recipe": "Jerk chicken with rice & peas",
-   "thumb": "https://www.themealdb.com/images/media/meals/tytyxu1515363282.jpg",
-   "views7": 1241,
-   "prev7": 1400,
-   "change": -11
-  },
-  {
-   "dish": "Pecan pie",
-   "wiki": "Pecan pie",
-   "id": "52856",
-   "recipe": "Choc Chip Pecan Pie",
-   "thumb": "https://www.themealdb.com/images/media/meals/rqvwxt1511384809.jpg",
-   "views7": 1175,
-   "prev7": 1255,
-   "change": -6
-  },
-  {
-   "dish": "Treacle tart",
-   "wiki": "Treacle tart",
-   "id": "52892",
-   "recipe": "Treacle Tart",
-   "thumb": "https://www.themealdb.com/images/media/meals/wprvrw1511641295.jpg",
-   "views7": 1121,
-   "prev7": 1501,
-   "change": -25
-  },
-  {
-   "dish": "Lancashire hotpot",
-   "wiki": "Lancashire hotpot",
-   "id": "52884",
-   "recipe": "Lancashire hotpot",
-   "thumb": "https://www.themealdb.com/images/media/meals/uttrxw1511637813.jpg",
-   "views7": 1097,
-   "prev7": 1052,
-   "change": 4
-  },
-  {
-   "dish": "Flan",
-   "wiki": "Flan",
-   "id": "53322",
-   "recipe": "Flan",
-   "thumb": "https://www.themealdb.com/images/media/meals/0s80wo1764374393.jpg",
-   "views7": 1003,
-   "prev7": 1031,
-   "change": -3
-  },
-  {
-   "dish": "Sweet and sour",
-   "wiki": "Sweet and sour",
-   "id": "52949",
-   "recipe": "Sweet and Sour Pork",
-   "thumb": "https://www.themealdb.com/images/media/meals/1529442316.jpg",
-   "views7": 910,
-   "prev7": 925,
-   "change": -2
   },
   {
    "dish": "Bread and butter pudding",
@@ -750,9 +550,209 @@
    "id": "52792",
    "recipe": "Bread and Butter Pudding",
    "thumb": "https://www.themealdb.com/images/media/meals/xqwwpy1483908697.jpg",
-   "views7": 901,
-   "prev7": 845,
-   "change": 7
+   "views7": 2464,
+   "prev7": 841,
+   "change": 193
+  },
+  {
+   "dish": "Dal",
+   "wiki": "Dal",
+   "id": "52785",
+   "recipe": "Dal fry",
+   "thumb": "https://www.themealdb.com/images/media/meals/wuxrtu1483564410.jpg",
+   "views7": 2396,
+   "prev7": 2439,
+   "change": -2
+  },
+  {
+   "dish": "Teriyaki",
+   "wiki": "Teriyaki",
+   "id": "52773",
+   "recipe": "Honey Teriyaki Salmon",
+   "thumb": "https://www.themealdb.com/images/media/meals/xxyupu1468262513.jpg",
+   "views7": 2285,
+   "prev7": 2150,
+   "change": 6
+  },
+  {
+   "dish": "Tagine",
+   "wiki": "Tagine",
+   "id": "52843",
+   "recipe": "Lamb Tagine",
+   "thumb": "https://www.themealdb.com/images/media/meals/yuwtuu1511295751.jpg",
+   "views7": 2276,
+   "prev7": 2047,
+   "change": 11
+  },
+  {
+   "dish": "Laksa",
+   "wiki": "Laksa",
+   "id": "52821",
+   "recipe": "Laksa King Prawn Noodles",
+   "thumb": "https://www.themealdb.com/images/media/meals/rvypwy1503069308.jpg",
+   "views7": 2275,
+   "prev7": 2281,
+   "change": 0
+  },
+  {
+   "dish": "Pumpkin pie",
+   "wiki": "Pumpkin pie",
+   "id": "52857",
+   "recipe": "Pumpkin Pie",
+   "thumb": "https://www.themealdb.com/images/media/meals/usuqtp1511385394.jpg",
+   "views7": 2273,
+   "prev7": 2706,
+   "change": -16
+  },
+  {
+   "dish": "Key lime pie",
+   "wiki": "Key lime pie",
+   "id": "52859",
+   "recipe": "Key Lime Pie",
+   "thumb": "https://www.themealdb.com/images/media/meals/qpqtuu1511386216.jpg",
+   "views7": 2247,
+   "prev7": 2324,
+   "change": -3
+  },
+  {
+   "dish": "Omelette",
+   "wiki": "Omelette",
+   "id": "52915",
+   "recipe": "French Omelette",
+   "thumb": "https://www.themealdb.com/images/media/meals/yvpuuy1511797244.jpg",
+   "views7": 2244,
+   "prev7": 2346,
+   "change": -4
+  },
+  {
+   "dish": "Chocolate brownie",
+   "wiki": "Chocolate brownie",
+   "id": "52860",
+   "recipe": "Chocolate Raspberry Brownies",
+   "thumb": "https://www.themealdb.com/images/media/meals/yypvst1511386427.jpg",
+   "views7": 2183,
+   "prev7": 2029,
+   "change": 8
+  },
+  {
+   "dish": "Fried rice",
+   "wiki": "Fried rice",
+   "id": "53367",
+   "recipe": "Chicken Fried Rice",
+   "thumb": "https://www.themealdb.com/images/media/meals/wuyd2h1765655837.jpg",
+   "views7": 2137,
+   "prev7": 2109,
+   "change": 1
+  },
+  {
+   "dish": "Nasi lemak",
+   "wiki": "Nasi lemak",
+   "id": "53051",
+   "recipe": "Nasi lemak",
+   "thumb": "https://www.themealdb.com/images/media/meals/wai9bw1619788844.jpg",
+   "views7": 2120,
+   "prev7": 2018,
+   "change": 5
+  },
+  {
+   "dish": "Clam chowder",
+   "wiki": "Clam chowder",
+   "id": "52840",
+   "recipe": "Clam chowder",
+   "thumb": "https://www.themealdb.com/images/media/meals/rvtvuw1511190488.jpg",
+   "views7": 2000,
+   "prev7": 2180,
+   "change": -8
+  },
+  {
+   "dish": "Meatball",
+   "wiki": "Meatball",
+   "id": "53277",
+   "recipe": "Lamb & apricot meatballs",
+   "thumb": "https://www.themealdb.com/images/media/meals/72fgzj1764109947.jpg",
+   "views7": 1925,
+   "prev7": 1877,
+   "change": 3
+  },
+  {
+   "dish": "Rendang",
+   "wiki": "Rendang",
+   "id": "53053",
+   "recipe": "Beef Rendang",
+   "thumb": "https://www.themealdb.com/images/media/meals/bc8v651619789840.jpg",
+   "views7": 1465,
+   "prev7": 1555,
+   "change": -6
+  },
+  {
+   "dish": "Feijoada",
+   "wiki": "Feijoada",
+   "id": "53482",
+   "recipe": "Black bean & meat stew - feijoada",
+   "thumb": "https://www.themealdb.com/images/media/meals/xrxz7h1782592711.jpg",
+   "views7": 1380,
+   "prev7": 1324,
+   "change": 4
+  },
+  {
+   "dish": "Jerk",
+   "wiki": "Jerk (cooking)",
+   "id": "52937",
+   "recipe": "Jerk chicken with rice & peas",
+   "thumb": "https://www.themealdb.com/images/media/meals/tytyxu1515363282.jpg",
+   "views7": 1308,
+   "prev7": 1378,
+   "change": -5
+  },
+  {
+   "dish": "Lancashire hotpot",
+   "wiki": "Lancashire hotpot",
+   "id": "52884",
+   "recipe": "Lancashire hotpot",
+   "thumb": "https://www.themealdb.com/images/media/meals/uttrxw1511637813.jpg",
+   "views7": 1155,
+   "prev7": 1030,
+   "change": 12
+  },
+  {
+   "dish": "Treacle tart",
+   "wiki": "Treacle tart",
+   "id": "52892",
+   "recipe": "Treacle Tart",
+   "thumb": "https://www.themealdb.com/images/media/meals/wprvrw1511641295.jpg",
+   "views7": 1153,
+   "prev7": 1504,
+   "change": -23
+  },
+  {
+   "dish": "Pecan pie",
+   "wiki": "Pecan pie",
+   "id": "52856",
+   "recipe": "Choc Chip Pecan Pie",
+   "thumb": "https://www.themealdb.com/images/media/meals/rqvwxt1511384809.jpg",
+   "views7": 1139,
+   "prev7": 1272,
+   "change": -10
+  },
+  {
+   "dish": "Flan",
+   "wiki": "Flan",
+   "id": "53322",
+   "recipe": "Flan",
+   "thumb": "https://www.themealdb.com/images/media/meals/0s80wo1764374393.jpg",
+   "views7": 997,
+   "prev7": 1036,
+   "change": -4
+  },
+  {
+   "dish": "Sweet and sour",
+   "wiki": "Sweet and sour",
+   "id": "52949",
+   "recipe": "Sweet and Sour Pork",
+   "thumb": "https://www.themealdb.com/images/media/meals/1529442316.jpg",
+   "views7": 886,
+   "prev7": 934,
+   "change": -5
   },
   {
    "dish": "Thai curry",
@@ -760,9 +760,9 @@
    "id": "52814",
    "recipe": "Thai Green Curry",
    "thumb": "https://www.themealdb.com/images/media/meals/sstssx1487349585.jpg",
-   "views7": 753,
-   "prev7": 743,
-   "change": 1
+   "views7": 754,
+   "prev7": 756,
+   "change": 0
   },
   {
    "dish": "Beef stew",
@@ -770,9 +770,9 @@
    "id": "53211",
    "recipe": "Lemongrass beef stew with noodles",
    "thumb": "https://www.themealdb.com/images/media/meals/ntafxw1763586291.jpg",
-   "views7": 99,
-   "prev7": 87,
-   "change": 14
+   "views7": 100,
+   "prev7": 90,
+   "change": 11
   },
   {
    "dish": "Osso buco",
@@ -780,9 +780,9 @@
    "id": "52810",
    "recipe": "Osso Buco alla Milanese",
    "thumb": "https://www.themealdb.com/images/media/meals/wwuqvt1487345467.jpg",
-   "views7": 87,
-   "prev7": 104,
-   "change": -16
+   "views7": 84,
+   "prev7": 102,
+   "change": -18
   }
  ]
 }
