@@ -6,7 +6,8 @@ const B = 'https://ewantait813-svg.github.io/recipie-generator/';
 const res = []; const ok = (name, pass, info = '') => res.push({ name, pass: !!pass, info });
 (async () => {
   const t0 = Date.now();
-  const b = await chromium.launch();
+  // On GitHub runners PW_CHANNEL=chrome uses the preinstalled Chrome, so no browser download is needed.
+  const b = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message));

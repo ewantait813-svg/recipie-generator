@@ -32,11 +32,16 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         with:
           node-version: 20
+      # Only the Playwright library is installed: the check drives the Chrome that GitHub's runners
+      # already have, because downloading a browser and its system packages sometimes stalled for 10+ minutes.
       - name: Install Playwright
         if: steps.gate.outputs.run == 'true'
-        run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+        timeout-minutes: 3
+        run: npm i --no-save playwright@1.56.1
       - name: Check the live site
         if: steps.gate.outputs.run == 'true'
+        env:
+          PW_CHANNEL: chrome
         run: |
           # One retry so a single network blip doesn't count as an outage.
           if ! node .github/scripts/quickcheck.js | tee out.txt; then
